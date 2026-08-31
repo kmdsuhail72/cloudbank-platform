@@ -1,0 +1,43 @@
+# Java
+target/
+*.class
+*.jar
+*.war
+*.log
+
+# Maven
+.mvn/timing.properties
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform.lock.hcl
+
+# Kubernetes secrets
+*-secret.yaml
+secrets.yaml
+
+# Misc
+tmp/
+temp/
