@@ -1,5 +1,6 @@
 package com.cloudbank.auth.controller;
 
+import com.cloudbank.auth.exception.EmailAlreadyRegisteredException;
 import com.cloudbank.auth.model.AuthUser;
 import com.cloudbank.auth.model.UserRole;
 import com.cloudbank.auth.service.RegistrationService;
@@ -98,5 +99,29 @@ class RegistrationControllerTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnConflictWhenEmailAlreadyRegistered() throws Exception {
+        when(registrationService.register(
+                "user@example.com",
+                "StrongPass123"
+        )).thenThrow(
+                new EmailAlreadyRegisteredException("user@example.com")
+        );
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "user@example.com",
+                                  "password": "StrongPass123"
+                                }
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error")
+                        .value("EMAIL_ALREADY_REGISTERED"))
+                .andExpect(jsonPath("$.message")
+                        .value("An account is already registered with email: user@example.com"));
     }
 }
