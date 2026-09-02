@@ -84,6 +84,10 @@ public class AuthUser {
         failedLoginAttempts = 0;
     }
 
+    public void lock() {
+        status = UserStatus.LOCKED;
+    }
+
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }

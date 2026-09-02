@@ -28,4 +28,14 @@ class AuthUserLoginStateTest {
 
         assertEquals(0, authUser.getFailedLoginAttempts());
     }
+
+    @Test
+    void shouldLockUserAccount() {
+        AuthUser authUser =
+                new AuthUser("user@example.com", "hashed-password");
+
+        authUser.lock();
+
+        assertEquals(UserStatus.LOCKED, authUser.getStatus());
+    }
 }
