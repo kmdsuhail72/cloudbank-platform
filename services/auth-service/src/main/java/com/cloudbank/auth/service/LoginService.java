@@ -24,7 +24,7 @@ public class LoginService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = InvalidCredentialsException.class)
     public AuthUser login(String email, String rawPassword) {
         String normalizedEmail =
                 email.trim().toLowerCase(Locale.ROOT);
