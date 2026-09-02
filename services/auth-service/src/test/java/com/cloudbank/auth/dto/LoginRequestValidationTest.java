@@ -68,4 +68,21 @@ class LoginRequestValidationTest {
                                 violation.getPropertyPath().toString().equals("password"))
         );
     }
+
+    @Test
+    void shouldRejectPasswordExceedingBcryptByteLimit() {
+        String password = "é".repeat(37);
+
+        LoginRequest request =
+                new LoginRequest("user@example.com", password);
+
+        Set<ConstraintViolation<LoginRequest>> violations =
+                validator.validate(request);
+
+        assertTrue(
+                violations.stream()
+                        .anyMatch(violation ->
+                                violation.getPropertyPath().toString().equals("password"))
+        );
+    }
 }

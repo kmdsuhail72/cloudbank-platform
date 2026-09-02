@@ -1,5 +1,6 @@
 package com.cloudbank.auth.dto;
 
+import com.cloudbank.auth.validation.BcryptPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -10,6 +11,7 @@ public record LoginRequest(
         String email,
 
         @NotBlank(message = "Password is required")
+        @BcryptPassword
         String password
 
 ) {
