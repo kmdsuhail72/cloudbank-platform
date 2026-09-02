@@ -1,5 +1,6 @@
 package com.cloudbank.auth.service;
 
+import com.cloudbank.auth.exception.InvalidCredentialsException;
 import com.cloudbank.auth.model.AuthUser;
 import com.cloudbank.auth.repository.AuthUserRepository;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,4 +68,44 @@ class LoginServiceTest {
                         "hashed-password"
                 );
     }
+
+    @Test
+    void shouldRejectLockedUserEvenWithCorrectPassword() {
+        AuthUserRepository authUserRepository =
+                mock(AuthUserRepository.class);
+
+        PasswordEncoder passwordEncoder =
+                mock(PasswordEncoder.class);
+
+        LoginService loginService =
+                new LoginService(
+                        authUserRepository,
+                        passwordEncoder
+                );
+
+        AuthUser authUser =
+                new AuthUser(
+                        "user@example.com",
+                        "hashed-password"
+                );
+
+        authUser.lock();
+
+        when(authUserRepository.findByEmailIgnoreCase("user@example.com"))
+                .thenReturn(Optional.of(authUser));
+
+        when(passwordEncoder.matches(
+                "StrongPass123",
+                "hashed-password"
+        )).thenReturn(true);
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> loginService.login(
+                        "user@example.com",
+                        "StrongPass123"
+                )
+        );
+    }
+
 }

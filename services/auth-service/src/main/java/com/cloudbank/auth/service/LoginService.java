@@ -2,6 +2,7 @@ package com.cloudbank.auth.service;
 
 import com.cloudbank.auth.exception.InvalidCredentialsException;
 import com.cloudbank.auth.model.AuthUser;
+import com.cloudbank.auth.model.UserStatus;
 import com.cloudbank.auth.repository.AuthUserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,10 @@ public class LoginService {
         AuthUser authUser = authUserRepository
                 .findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(InvalidCredentialsException::new);
+
+        if (authUser.getStatus() != UserStatus.ACTIVE) {
+            throw new InvalidCredentialsException();
+        }
 
         if (!passwordEncoder.matches(
                 rawPassword,
