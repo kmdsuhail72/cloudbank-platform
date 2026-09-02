@@ -86,7 +86,13 @@ class RegistrationControllerTest {
                                   "password": "StrongPass123"
                                 }
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error")
+                        .value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message")
+                        .value("Request validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.email")
+                        .value("Email must be valid"));
     }
 
     @Test
@@ -99,7 +105,13 @@ class RegistrationControllerTest {
                                   "password": "short"
                                 }
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error")
+                        .value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message")
+                        .value("Request validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.password")
+                        .value("Password must be between 8 and 72 characters"));
     }
 
     @Test
