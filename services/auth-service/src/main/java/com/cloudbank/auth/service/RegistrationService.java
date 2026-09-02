@@ -32,8 +32,6 @@ public class RegistrationService {
     public AuthUser register(String email, String rawPassword) {
         String normalizedEmail = normalizeEmail(email);
 
-        ensureEmailAvailable(normalizedEmail);
-
         String passwordHash = passwordEncoder.encode(rawPassword);
 
         AuthUser authUser = new AuthUser(
@@ -75,9 +73,4 @@ public class RegistrationService {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
-    private void ensureEmailAvailable(String email) {
-        if (authUserRepository.existsByEmailIgnoreCase(email)) {
-            throw new EmailAlreadyRegisteredException(email);
-        }
-    }
 }

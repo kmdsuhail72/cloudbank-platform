@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,9 +28,6 @@ class RegistrationServiceTest {
 
         RegistrationService registrationService =
                 new RegistrationService(authUserRepository, passwordEncoder);
-
-        when(authUserRepository.existsByEmailIgnoreCase("user@example.com"))
-                .thenReturn(false);
 
         when(passwordEncoder.encode("StrongPass123"))
                 .thenReturn("hashed-password");
@@ -47,9 +44,6 @@ class RegistrationServiceTest {
         assertEquals("hashed-password", savedUser.getPasswordHash());
         assertNotEquals("StrongPass123", savedUser.getPasswordHash());
 
-        verify(authUserRepository)
-                .existsByEmailIgnoreCase("user@example.com");
-
         verify(passwordEncoder)
                 .encode("StrongPass123");
 
@@ -58,32 +52,31 @@ class RegistrationServiceTest {
     }
 
     @Test
-    void shouldRejectAlreadyRegisteredEmail() {
+    void shouldNotPrecheckEmailAvailabilityBeforeHashingAndSaving() {
         AuthUserRepository authUserRepository = mock(AuthUserRepository.class);
         PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
         RegistrationService registrationService =
                 new RegistrationService(authUserRepository, passwordEncoder);
 
-        when(authUserRepository.existsByEmailIgnoreCase("user@example.com"))
-                .thenReturn(true);
+        when(passwordEncoder.encode("StrongPass123"))
+                .thenReturn("hashed-password");
 
-        assertThrows(
-                EmailAlreadyRegisteredException.class,
-                () -> registrationService.register(
-                        "  User@Example.COM  ",
-                        "StrongPass123"
-                )
+        when(authUserRepository.saveAndFlush(any(AuthUser.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        registrationService.register(
+                "  User@Example.COM  ",
+                "StrongPass123"
         );
 
+        verify(passwordEncoder)
+                .encode("StrongPass123");
+
         verify(authUserRepository)
-                .existsByEmailIgnoreCase("user@example.com");
-
-        verify(passwordEncoder, never())
-                .encode(any());
-
-        verify(authUserRepository, never())
                 .saveAndFlush(any(AuthUser.class));
+
+        verifyNoMoreInteractions(authUserRepository);
     }
 
     @Test
@@ -93,9 +86,6 @@ class RegistrationServiceTest {
 
         RegistrationService registrationService =
                 new RegistrationService(authUserRepository, passwordEncoder);
-
-        when(authUserRepository.existsByEmailIgnoreCase("user@example.com"))
-                .thenReturn(false);
 
         when(passwordEncoder.encode("StrongPass123"))
                 .thenReturn("hashed-password");
@@ -131,9 +121,6 @@ class RegistrationServiceTest {
 
         RegistrationService registrationService =
                 new RegistrationService(authUserRepository, passwordEncoder);
-
-        when(authUserRepository.existsByEmailIgnoreCase("user@example.com"))
-                .thenReturn(false);
 
         when(passwordEncoder.encode("StrongPass123"))
                 .thenReturn("hashed-password");
