@@ -11,6 +11,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -200,6 +202,38 @@ class LoginServiceTest {
                 com.cloudbank.auth.model.UserStatus.LOCKED,
                 authUser.getStatus()
         );
+    }
+
+    @Test
+    void shouldPerformPasswordComparisonWhenEmailDoesNotExist() {
+        AuthUserRepository authUserRepository =
+                mock(AuthUserRepository.class);
+
+        PasswordEncoder passwordEncoder =
+                mock(PasswordEncoder.class);
+
+        LoginService loginService =
+                new LoginService(
+                        authUserRepository,
+                        passwordEncoder
+                );
+
+        when(authUserRepository.findByEmailIgnoreCase("missing@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> loginService.login(
+                        "missing@example.com",
+                        "StrongPass123"
+                )
+        );
+
+        verify(passwordEncoder)
+                .matches(
+                        eq("StrongPass123"),
+                        anyString()
+                );
     }
 
 }

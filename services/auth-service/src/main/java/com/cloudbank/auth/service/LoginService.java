@@ -9,11 +9,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 public class LoginService {
 
     private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2y$10$2ar0dx96iNoH4U55xnEGRODKKWPLS1ZGG9D9oCUJyR3rJ1ysNRCau";
 
     private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
@@ -31,9 +35,19 @@ public class LoginService {
         String normalizedEmail =
                 email.trim().toLowerCase(Locale.ROOT);
 
-        AuthUser authUser = authUserRepository
-                .findByEmailIgnoreCase(normalizedEmail)
-                .orElseThrow(InvalidCredentialsException::new);
+        Optional<AuthUser> authUserOptional = authUserRepository
+                .findByEmailIgnoreCase(normalizedEmail);
+
+        if (authUserOptional.isEmpty()) {
+            passwordEncoder.matches(
+                    rawPassword,
+                    DUMMY_PASSWORD_HASH
+            );
+
+            throw new InvalidCredentialsException();
+        }
+
+        AuthUser authUser = authUserOptional.get();
 
         if (authUser.getStatus() != UserStatus.ACTIVE) {
             throw new InvalidCredentialsException();
