@@ -13,6 +13,8 @@ import java.util.Locale;
 @Service
 public class LoginService {
 
+    private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+
     private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -42,6 +44,11 @@ public class LoginService {
                 authUser.getPasswordHash()
         )) {
             authUser.recordFailedLoginAttempt();
+
+            if (authUser.getFailedLoginAttempts() >= MAX_FAILED_LOGIN_ATTEMPTS) {
+                authUser.lock();
+            }
+
             throw new InvalidCredentialsException();
         }
 

@@ -150,4 +150,56 @@ class LoginServiceTest {
         );
     }
 
+    @Test
+    void shouldLockAccountAfterFifthFailedLoginAttempt() {
+        AuthUserRepository authUserRepository =
+                mock(AuthUserRepository.class);
+
+        PasswordEncoder passwordEncoder =
+                mock(PasswordEncoder.class);
+
+        LoginService loginService =
+                new LoginService(
+                        authUserRepository,
+                        passwordEncoder
+                );
+
+        AuthUser authUser =
+                new AuthUser(
+                        "user@example.com",
+                        "hashed-password"
+                );
+
+        authUser.recordFailedLoginAttempt();
+        authUser.recordFailedLoginAttempt();
+        authUser.recordFailedLoginAttempt();
+        authUser.recordFailedLoginAttempt();
+
+        when(authUserRepository.findByEmailIgnoreCase("user@example.com"))
+                .thenReturn(Optional.of(authUser));
+
+        when(passwordEncoder.matches(
+                "WrongPass123",
+                "hashed-password"
+        )).thenReturn(false);
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> loginService.login(
+                        "user@example.com",
+                        "WrongPass123"
+                )
+        );
+
+        assertEquals(
+                5,
+                authUser.getFailedLoginAttempts()
+        );
+
+        assertEquals(
+                com.cloudbank.auth.model.UserStatus.LOCKED,
+                authUser.getStatus()
+        );
+    }
+
 }

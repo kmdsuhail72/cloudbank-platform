@@ -2,6 +2,7 @@ package com.cloudbank.auth.service;
 
 import com.cloudbank.auth.exception.InvalidCredentialsException;
 import com.cloudbank.auth.model.AuthUser;
+import com.cloudbank.auth.model.UserStatus;
 import com.cloudbank.auth.repository.AuthUserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,6 +63,43 @@ class LoginServiceIntegrationTest {
         assertEquals(
                 1,
                 reloadedUser.getFailedLoginAttempts()
+        );
+    }
+
+    @Test
+    void shouldPersistLockedStatusAfterFifthFailedLoginAttempt() {
+        AuthUser authUser = new AuthUser(
+                TEST_EMAIL,
+                passwordEncoder.encode("StrongPass123")
+        );
+
+        authUser.recordFailedLoginAttempt();
+        authUser.recordFailedLoginAttempt();
+        authUser.recordFailedLoginAttempt();
+        authUser.recordFailedLoginAttempt();
+
+        authUserRepository.save(authUser);
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> loginService.login(
+                        TEST_EMAIL,
+                        "WrongPass123"
+                )
+        );
+
+        AuthUser reloadedUser = authUserRepository
+                .findByEmailIgnoreCase(TEST_EMAIL)
+                .orElseThrow();
+
+        assertEquals(
+                5,
+                reloadedUser.getFailedLoginAttempts()
+        );
+
+        assertEquals(
+                UserStatus.LOCKED,
+                reloadedUser.getStatus()
         );
     }
 
