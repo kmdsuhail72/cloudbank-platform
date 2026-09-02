@@ -49,14 +49,16 @@ public class LoginService {
 
         AuthUser authUser = authUserOptional.get();
 
+        boolean passwordMatches = passwordEncoder.matches(
+                rawPassword,
+                authUser.getPasswordHash()
+        );
+
         if (authUser.getStatus() != UserStatus.ACTIVE) {
             throw new InvalidCredentialsException();
         }
 
-        if (!passwordEncoder.matches(
-                rawPassword,
-                authUser.getPasswordHash()
-        )) {
+        if (!passwordMatches) {
             authUser.recordFailedLoginAttempt();
 
             if (authUser.getFailedLoginAttempts() >= MAX_FAILED_LOGIN_ATTEMPTS) {

@@ -108,6 +108,12 @@ class LoginServiceTest {
                         "StrongPass123"
                 )
         );
+
+        verify(passwordEncoder)
+                .matches(
+                        "StrongPass123",
+                        "hashed-password"
+                );
     }
 
     @Test
