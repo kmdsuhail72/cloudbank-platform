@@ -4,7 +4,11 @@ import com.cloudbank.auth.exception.EmailAlreadyRegisteredException;
 import com.cloudbank.auth.model.AuthUser;
 import com.cloudbank.auth.repository.AuthUserRepository;
 import org.junit.jupiter.api.Test;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -31,7 +35,7 @@ class RegistrationServiceTest {
         when(passwordEncoder.encode("StrongPass123"))
                 .thenReturn("hashed-password");
 
-        when(authUserRepository.save(any(AuthUser.class)))
+        when(authUserRepository.saveAndFlush(any(AuthUser.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         AuthUser savedUser = registrationService.register(
@@ -50,7 +54,7 @@ class RegistrationServiceTest {
                 .encode("StrongPass123");
 
         verify(authUserRepository)
-                .save(any(AuthUser.class));
+                .saveAndFlush(any(AuthUser.class));
     }
 
     @Test
@@ -79,6 +83,83 @@ class RegistrationServiceTest {
                 .encode(any());
 
         verify(authUserRepository, never())
-                .save(any(AuthUser.class));
+                .saveAndFlush(any(AuthUser.class));
+    }
+
+    @Test
+    void shouldTranslateDatabaseDuplicateEmailConflict() {
+        AuthUserRepository authUserRepository = mock(AuthUserRepository.class);
+        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+
+        RegistrationService registrationService =
+                new RegistrationService(authUserRepository, passwordEncoder);
+
+        when(authUserRepository.existsByEmailIgnoreCase("user@example.com"))
+                .thenReturn(false);
+
+        when(passwordEncoder.encode("StrongPass123"))
+                .thenReturn("hashed-password");
+
+        ConstraintViolationException constraintViolation =
+                new ConstraintViolationException(
+                        "duplicate email",
+                        new SQLException("duplicate email", "23505"),
+                        "ux_auth_users_email_lower"
+                );
+
+        when(authUserRepository.saveAndFlush(any(AuthUser.class)))
+                .thenThrow(
+                        new DataIntegrityViolationException(
+                                "duplicate email",
+                                constraintViolation
+                        )
+                );
+
+        assertThrows(
+                EmailAlreadyRegisteredException.class,
+                () -> registrationService.register(
+                        "user@example.com",
+                        "StrongPass123"
+                )
+        );
+    }
+
+    @Test
+    void shouldNotTranslateUnrelatedDatabaseIntegrityViolation() {
+        AuthUserRepository authUserRepository = mock(AuthUserRepository.class);
+        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+
+        RegistrationService registrationService =
+                new RegistrationService(authUserRepository, passwordEncoder);
+
+        when(authUserRepository.existsByEmailIgnoreCase("user@example.com"))
+                .thenReturn(false);
+
+        when(passwordEncoder.encode("StrongPass123"))
+                .thenReturn("hashed-password");
+
+        ConstraintViolationException constraintViolation =
+                new ConstraintViolationException(
+                        "status constraint",
+                        new SQLException("check violation", "23514"),
+                        "chk_auth_users_status"
+                );
+
+        DataIntegrityViolationException databaseException =
+                new DataIntegrityViolationException(
+                        "status constraint",
+                        constraintViolation
+                );
+
+        when(authUserRepository.saveAndFlush(any(AuthUser.class)))
+                .thenThrow(databaseException);
+
+        assertThrows(
+                DataIntegrityViolationException.class,
+                () -> registrationService.register(
+                        "user@example.com",
+                        "StrongPass123"
+                )
+        );
     }
 }
