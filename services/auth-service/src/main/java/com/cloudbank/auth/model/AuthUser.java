@@ -76,6 +76,14 @@ public class AuthUser {
         return failedLoginAttempts;
     }
 
+    public void recordFailedLoginAttempt() {
+        failedLoginAttempts++;
+    }
+
+    public void resetFailedLoginAttempts() {
+        failedLoginAttempts = 0;
+    }
+
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
