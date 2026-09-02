@@ -32,4 +32,26 @@ class GlobalExceptionHandlerTest {
                 response.getBody().get("message")
         );
     }
+
+    @Test
+    void shouldReturnGenericAcceptedResponseForAlreadyRegisteredEmail() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        ResponseEntity<Map<String, String>> response =
+                handler.handleEmailAlreadyRegistered(
+                        new EmailAlreadyRegisteredException(
+                                "user@example.com"
+                        )
+                );
+
+        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+
+        assertNotNull(response.getBody());
+        assertEquals(
+                "If registration can be completed, further instructions will be provided.",
+                response.getBody().get("message")
+        );
+        assertEquals(1, response.getBody().size());
+    }
+
 }

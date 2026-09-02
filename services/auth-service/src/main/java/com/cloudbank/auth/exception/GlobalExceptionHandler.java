@@ -15,10 +15,10 @@ public class GlobalExceptionHandler {
             EmailAlreadyRegisteredException exception
     ) {
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
+                .status(HttpStatus.ACCEPTED)
                 .body(Map.of(
-                        "error", "EMAIL_ALREADY_REGISTERED",
-                        "message", exception.getMessage()
+                        "message",
+                        "If registration can be completed, further instructions will be provided."
                 ));
     }
 

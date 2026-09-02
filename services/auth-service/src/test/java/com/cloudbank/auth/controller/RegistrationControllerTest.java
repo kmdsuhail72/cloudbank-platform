@@ -30,7 +30,8 @@ class RegistrationControllerTest {
     private RegistrationService registrationService;
 
     @Test
-    void shouldRegisterUserWithValidRequest() throws Exception {
+    void shouldReturnGenericAcceptedResponseForSuccessfulRegistration()
+            throws Exception {
         UUID userId = UUID.fromString(
                 "11111111-1111-1111-1111-111111111111"
         );
@@ -59,15 +60,15 @@ class RegistrationControllerTest {
                                   "password": "StrongPass123"
                                 }
                                 """))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.userId")
-                        .value("11111111-1111-1111-1111-111111111111"))
-                .andExpect(jsonPath("$.email")
-                        .value("user@example.com"))
-                .andExpect(jsonPath("$.role")
-                        .value("CUSTOMER"))
+                .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.message")
-                        .value("Registration successful"));
+                        .value(
+                                "If registration can be completed, further instructions will be provided."
+                        ))
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.userId").doesNotExist())
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.role").doesNotExist());
 
         verify(registrationService).register(
                 "user@example.com",
@@ -102,7 +103,8 @@ class RegistrationControllerTest {
     }
 
     @Test
-    void shouldReturnConflictWhenEmailAlreadyRegistered() throws Exception {
+    void shouldReturnGenericAcceptedResponseWhenEmailAlreadyRegistered()
+            throws Exception {
         when(registrationService.register(
                 "user@example.com",
                 "StrongPass123"
@@ -118,10 +120,12 @@ class RegistrationControllerTest {
                                   "password": "StrongPass123"
                                 }
                                 """))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error")
-                        .value("EMAIL_ALREADY_REGISTERED"))
+                .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.message")
-                        .value("An account is already registered with email: user@example.com"));
+                        .value(
+                                "If registration can be completed, further instructions will be provided."
+                        ))
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.email").doesNotExist());
     }
 }
