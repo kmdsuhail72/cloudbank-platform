@@ -68,4 +68,21 @@ class RegisterRequestValidationTest {
                                 violation.getPropertyPath().toString().equals("password"))
         );
     }
+
+    @Test
+    void shouldRejectPasswordExceedingBcryptByteLimit() {
+        String password = "é".repeat(37);
+
+        RegisterRequest request =
+                new RegisterRequest("user@example.com", password);
+
+        Set<ConstraintViolation<RegisterRequest>> violations =
+                validator.validate(request);
+
+        assertTrue(
+                violations.stream()
+                        .anyMatch(violation ->
+                                violation.getPropertyPath().toString().equals("password"))
+        );
+    }
 }
