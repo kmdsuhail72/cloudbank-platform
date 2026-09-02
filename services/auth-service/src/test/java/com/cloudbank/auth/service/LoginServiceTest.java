@@ -108,4 +108,46 @@ class LoginServiceTest {
         );
     }
 
+    @Test
+    void shouldRecordFailedLoginAttemptWhenPasswordIsIncorrect() {
+        AuthUserRepository authUserRepository =
+                mock(AuthUserRepository.class);
+
+        PasswordEncoder passwordEncoder =
+                mock(PasswordEncoder.class);
+
+        LoginService loginService =
+                new LoginService(
+                        authUserRepository,
+                        passwordEncoder
+                );
+
+        AuthUser authUser =
+                new AuthUser(
+                        "user@example.com",
+                        "hashed-password"
+                );
+
+        when(authUserRepository.findByEmailIgnoreCase("user@example.com"))
+                .thenReturn(Optional.of(authUser));
+
+        when(passwordEncoder.matches(
+                "WrongPass123",
+                "hashed-password"
+        )).thenReturn(false);
+
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> loginService.login(
+                        "user@example.com",
+                        "WrongPass123"
+                )
+        );
+
+        assertEquals(
+                1,
+                authUser.getFailedLoginAttempts()
+        );
+    }
+
 }

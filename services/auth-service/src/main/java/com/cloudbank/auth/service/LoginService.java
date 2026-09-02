@@ -41,6 +41,7 @@ public class LoginService {
                 rawPassword,
                 authUser.getPasswordHash()
         )) {
+            authUser.recordFailedLoginAttempt();
             throw new InvalidCredentialsException();
         }
 
