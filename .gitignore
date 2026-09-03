@@ -41,3 +41,8 @@ secrets.yaml
 # Misc
 tmp/
 temp/
+
+# Cryptographic keys
+*.pem
+*.key
+keys/
