@@ -36,7 +36,7 @@ public class LoginService {
                 email.trim().toLowerCase(Locale.ROOT);
 
         Optional<AuthUser> authUserOptional = authUserRepository
-                .findByEmailIgnoreCase(normalizedEmail);
+                .findByEmailIgnoreCaseForUpdate(normalizedEmail);
 
         if (authUserOptional.isEmpty()) {
             passwordEncoder.matches(

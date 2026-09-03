@@ -41,7 +41,7 @@ class LoginServiceTest {
 
         authUser.recordFailedLoginAttempt();
 
-        when(authUserRepository.findByEmailIgnoreCase("user@example.com"))
+        when(authUserRepository.findByEmailIgnoreCaseForUpdate("user@example.com"))
                 .thenReturn(Optional.of(authUser));
 
         when(passwordEncoder.matches(
@@ -62,7 +62,7 @@ class LoginServiceTest {
         );
 
         verify(authUserRepository)
-                .findByEmailIgnoreCase("user@example.com");
+                .findByEmailIgnoreCaseForUpdate("user@example.com");
 
         verify(passwordEncoder)
                 .matches(
@@ -93,7 +93,7 @@ class LoginServiceTest {
 
         authUser.lock();
 
-        when(authUserRepository.findByEmailIgnoreCase("user@example.com"))
+        when(authUserRepository.findByEmailIgnoreCaseForUpdate("user@example.com"))
                 .thenReturn(Optional.of(authUser));
 
         when(passwordEncoder.matches(
@@ -136,7 +136,7 @@ class LoginServiceTest {
                         "hashed-password"
                 );
 
-        when(authUserRepository.findByEmailIgnoreCase("user@example.com"))
+        when(authUserRepository.findByEmailIgnoreCaseForUpdate("user@example.com"))
                 .thenReturn(Optional.of(authUser));
 
         when(passwordEncoder.matches(
@@ -183,7 +183,7 @@ class LoginServiceTest {
         authUser.recordFailedLoginAttempt();
         authUser.recordFailedLoginAttempt();
 
-        when(authUserRepository.findByEmailIgnoreCase("user@example.com"))
+        when(authUserRepository.findByEmailIgnoreCaseForUpdate("user@example.com"))
                 .thenReturn(Optional.of(authUser));
 
         when(passwordEncoder.matches(
@@ -224,7 +224,7 @@ class LoginServiceTest {
                         passwordEncoder
                 );
 
-        when(authUserRepository.findByEmailIgnoreCase("missing@example.com"))
+        when(authUserRepository.findByEmailIgnoreCaseForUpdate("missing@example.com"))
                 .thenReturn(Optional.empty());
 
         assertThrows(
