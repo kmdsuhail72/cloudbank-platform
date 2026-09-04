@@ -85,6 +85,23 @@ class AuthGatewayRoutesTest {
         );
     }
 
+    @Test
+    void shouldNotRouteUnknownAuthPath() {
+        RouterFunction<ServerResponse> routes =
+                authGatewayRoutes.authRoutes(
+                        "http://localhost:8081"
+                );
+
+        assertFalse(
+                routes.route(
+                        request(
+                                "POST",
+                                "/api/v1/auth/unknown"
+                        )
+                ).isPresent()
+        );
+    }
+
     private ServerRequest request(
             String method,
             String path

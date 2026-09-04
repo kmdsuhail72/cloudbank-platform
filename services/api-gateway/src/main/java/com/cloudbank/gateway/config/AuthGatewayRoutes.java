@@ -20,7 +20,11 @@ public class AuthGatewayRoutes {
         return GatewayRouterFunctions
                 .route("auth-service")
                 .POST(
-                        "/api/v1/auth/**",
+                        "/api/v1/auth/login",
+                        HandlerFunctions.http()
+                )
+                .POST(
+                        "/api/v1/auth/register",
                         HandlerFunctions.http()
                 )
                 .before(
