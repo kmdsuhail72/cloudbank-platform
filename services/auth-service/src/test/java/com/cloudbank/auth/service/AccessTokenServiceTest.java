@@ -33,7 +33,7 @@ class AccessTokenServiceTest {
 
         JwtProperties jwtProperties =
                 new JwtProperties(
-                        "cloudbank-auth-service",
+                        "https://auth.cloudbank.test",
                         "cloudbank-api",
                         Duration.ofMinutes(15)
                 );
@@ -113,8 +113,12 @@ class AccessTokenServiceTest {
                         .getClaims();
 
         assertEquals(
-                "cloudbank-auth-service",
-                claims.get("iss")
+                "https://auth.cloudbank.test",
+                parametersCaptor
+                        .getValue()
+                        .getClaims()
+                        .getIssuer()
+                        .toString()
         );
 
         assertEquals(

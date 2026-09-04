@@ -73,7 +73,7 @@ class JwtConfigTest {
 
         JwtClaimsSet claims =
                 JwtClaimsSet.builder()
-                        .issuer("cloudbank-auth-service")
+                        .issuer("https://auth.cloudbank.test")
                         .subject("test-user-id")
                         .issuedAt(issuedAt)
                         .expiresAt(issuedAt.plusSeconds(300))
@@ -116,7 +116,7 @@ class JwtConfigTest {
         );
 
         assertEquals(
-                "cloudbank-auth-service",
+                "https://auth.cloudbank.test",
                 decodedJwt.getClaims().get("iss")
         );
 
