@@ -59,6 +59,32 @@ class AuthGatewayRoutesTest {
         );
     }
 
+    @Test
+    void shouldNotRouteAuthEndpointsWithWrongHttpMethod() {
+        RouterFunction<ServerResponse> routes =
+                authGatewayRoutes.authRoutes(
+                        "http://localhost:8081"
+                );
+
+        assertFalse(
+                routes.route(
+                        request(
+                                "GET",
+                                "/api/v1/auth/login"
+                        )
+                ).isPresent()
+        );
+
+        assertFalse(
+                routes.route(
+                        request(
+                                "GET",
+                                "/api/v1/auth/register"
+                        )
+                ).isPresent()
+        );
+    }
+
     private ServerRequest request(
             String method,
             String path

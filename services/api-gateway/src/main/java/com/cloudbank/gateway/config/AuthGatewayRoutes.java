@@ -6,7 +6,6 @@ import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctio
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
@@ -20,10 +19,8 @@ public class AuthGatewayRoutes {
     ) {
         return GatewayRouterFunctions
                 .route("auth-service")
-                .route(
-                        RequestPredicates.path(
-                                "/api/v1/auth/**"
-                        ),
+                .POST(
+                        "/api/v1/auth/**",
                         HandlerFunctions.http()
                 )
                 .before(
