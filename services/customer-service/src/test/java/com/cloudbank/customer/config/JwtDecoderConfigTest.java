@@ -85,7 +85,7 @@ class JwtDecoderConfigTest {
                         .issuer(
                                 "https://auth.cloudbank.test"
                         )
-                        .subject("test-user-id")
+                        .subject("11111111-1111-1111-1111-111111111111")
                         .audience(
                                 List.of("cloudbank-api")
                         )
@@ -109,7 +109,7 @@ class JwtDecoderConfigTest {
                 jwtDecoder.decode(token);
 
         assertEquals(
-                "test-user-id",
+                "11111111-1111-1111-1111-111111111111",
                 decodedJwt.getSubject()
         );
 
@@ -182,7 +182,7 @@ class JwtDecoderConfigTest {
                         .issuer(
                                 "https://wrong.cloudbank.test"
                         )
-                        .subject("test-user-id")
+                        .subject("11111111-1111-1111-1111-111111111111")
                         .audience(
                                 List.of("cloudbank-api")
                         )
@@ -266,7 +266,7 @@ class JwtDecoderConfigTest {
                         .issuer(
                                 "https://auth.cloudbank.test"
                         )
-                        .subject("test-user-id")
+                        .subject("11111111-1111-1111-1111-111111111111")
                         .audience(
                                 List.of("wrong-api")
                         )
@@ -291,6 +291,93 @@ class JwtDecoderConfigTest {
                 () -> jwtDecoder.decode(token)
         );
     }
+
+    @Test
+    void shouldRejectTokenWithMalformedSubject(
+            @TempDir Path tempDirectory
+    ) throws Exception {
+        KeyPairGenerator keyPairGenerator =
+                KeyPairGenerator.getInstance("RSA");
+
+        keyPairGenerator.initialize(2048);
+
+        KeyPair keyPair =
+                keyPairGenerator.generateKeyPair();
+
+        RSAPublicKey publicKey =
+                (RSAPublicKey) keyPair.getPublic();
+
+        RSAPrivateKey privateKey =
+                (RSAPrivateKey) keyPair.getPrivate();
+
+        Path publicKeyPath =
+                tempDirectory.resolve("jwt-public.pem");
+
+        writePublicKeyPem(
+                publicKeyPath,
+                publicKey
+        );
+
+        JwtVerificationProperties properties =
+                new JwtVerificationProperties(
+                        "https://auth.cloudbank.test",
+                        "cloudbank-api",
+                        new FileSystemResource(
+                                publicKeyPath.toFile()
+                        )
+                );
+
+        JwtDecoder jwtDecoder =
+                new JwtDecoderConfig()
+                        .jwtDecoder(properties);
+
+        JwtEncoder jwtEncoder =
+                NimbusJwtEncoder
+                        .withKeyPair(
+                                publicKey,
+                                privateKey
+                        )
+                        .algorithm(
+                                SignatureAlgorithm.RS256
+                        )
+                        .build();
+
+        Instant issuedAt =
+                Instant.now();
+
+        JwtClaimsSet claims =
+                JwtClaimsSet.builder()
+                        .issuer(
+                                "https://auth.cloudbank.test"
+                        )
+                        .subject(
+                                "not-a-uuid"
+                        )
+                        .audience(
+                                List.of("cloudbank-api")
+                        )
+                        .issuedAt(issuedAt)
+                        .expiresAt(
+                                issuedAt.plusSeconds(300)
+                        )
+                        .id("test-jti")
+                        .build();
+
+        String token =
+                jwtEncoder
+                        .encode(
+                                JwtEncoderParameters.from(
+                                        claims
+                                )
+                        )
+                        .getTokenValue();
+
+        assertThrows(
+                JwtException.class,
+                () -> jwtDecoder.decode(token)
+        );
+    }
+
 
     private void writePublicKeyPem(
             Path path,
