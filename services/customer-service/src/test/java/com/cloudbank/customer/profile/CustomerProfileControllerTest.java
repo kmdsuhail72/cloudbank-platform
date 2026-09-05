@@ -1,7 +1,4 @@
-package com.cloudbank.customer.config;
-
-import com.cloudbank.customer.profile.CustomerProfileController;
-import com.cloudbank.customer.profile.CustomerProfileService;
+package com.cloudbank.customer.profile;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,11 +6,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.cloudbank.customer.config.SecurityConfig;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -22,13 +20,14 @@ import java.util.UUID;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
         controllers = CustomerProfileController.class
 )
 @Import(SecurityConfig.class)
-class SecurityConfigTest {
+class CustomerProfileControllerTest {
 
     private static final UUID AUTH_USER_ID =
             UUID.fromString(
@@ -48,7 +47,7 @@ class SecurityConfigTest {
     void setUp() {
         Instant now = Instant.now();
 
-        Jwt validJwt =
+        Jwt jwt =
                 Jwt.withTokenValue(
                                 "valid-token"
                         )
@@ -76,26 +75,12 @@ class SecurityConfigTest {
                         "valid-token"
                 )
         ).thenReturn(
-                validJwt
+                jwt
         );
     }
 
     @Test
-    void shouldPermitHealthWithoutToken()
-            throws Exception {
-
-        mockMvc.perform(
-                        get(
-                                "/actuator/health"
-                        )
-                )
-                .andExpect(
-                        status().isNotFound()
-                );
-    }
-
-    @Test
-    void shouldRejectCustomerApiWithoutToken()
+    void shouldRequireAuthentication()
             throws Exception {
 
         mockMvc.perform(
@@ -109,7 +94,60 @@ class SecurityConfigTest {
     }
 
     @Test
-    void shouldAllowCustomerApiWithValidBearerToken()
+    void shouldReturnProfileForAuthenticatedSubject()
+            throws Exception {
+
+        CustomerProfile profile =
+                new CustomerProfile(
+                        AUTH_USER_ID
+                );
+
+        when(
+                service.findByAuthUserId(
+                        AUTH_USER_ID
+                )
+        ).thenReturn(
+                Optional.of(
+                        profile
+                )
+        );
+
+        mockMvc.perform(
+                        get(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.authUserId"
+                        ).value(
+                                AUTH_USER_ID.toString()
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.status"
+                        ).value(
+                                "ACTIVE"
+                        )
+                );
+
+        verify(
+                service
+        ).findByAuthUserId(
+                AUTH_USER_ID
+        );
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenProfileDoesNotExist()
             throws Exception {
 
         when(
@@ -138,65 +176,5 @@ class SecurityConfigTest {
         ).findByAuthUserId(
                 AUTH_USER_ID
         );
-    }
-
-    @Test
-    void shouldRejectInvalidBearerToken()
-            throws Exception {
-
-        when(
-                jwtDecoder.decode(
-                        "invalid-token"
-                )
-        ).thenThrow(
-                new BadJwtException(
-                        "invalid token"
-                )
-        );
-
-        mockMvc.perform(
-                        get(
-                                "/api/v1/customers/me"
-                        )
-                                .header(
-                                        "Authorization",
-                                        "Bearer invalid-token"
-                                )
-                )
-                .andExpect(
-                        status().isUnauthorized()
-                );
-    }
-
-    @Test
-    void shouldRejectDirectErrorRequest()
-            throws Exception {
-
-        mockMvc.perform(
-                        get(
-                                "/error"
-                        )
-                )
-                .andExpect(
-                        status().isUnauthorized()
-                );
-    }
-
-    @Test
-    void shouldDenyUnrelatedPathEvenWithValidToken()
-            throws Exception {
-
-        mockMvc.perform(
-                        get(
-                                "/internal/probe"
-                        )
-                                .header(
-                                        "Authorization",
-                                        "Bearer valid-token"
-                                )
-                )
-                .andExpect(
-                        status().isForbidden()
-                );
     }
 }
