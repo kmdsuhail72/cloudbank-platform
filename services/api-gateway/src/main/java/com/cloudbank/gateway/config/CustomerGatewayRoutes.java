@@ -23,6 +23,10 @@ public class CustomerGatewayRoutes {
                         "/api/v1/customers/me",
                         HandlerFunctions.http()
                 )
+                .POST(
+                        "/api/v1/customers/me",
+                        HandlerFunctions.http()
+                )
                 .before(
                         BeforeFilterFunctions.uri(
                                 customerServiceBaseUrl

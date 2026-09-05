@@ -34,7 +34,24 @@ class CustomerGatewayRoutesTest {
     }
 
     @Test
-    void shouldNotRouteCustomerProfileWithWrongHttpMethod() {
+    void shouldRouteCustomerProfileCreationPath() {
+        RouterFunction<ServerResponse> routes =
+                customerGatewayRoutes.customerRoutes(
+                        "http://localhost:8083"
+                );
+
+        assertTrue(
+                routes.route(
+                        request(
+                                "POST",
+                                "/api/v1/customers/me"
+                        )
+                ).isPresent()
+        );
+    }
+
+    @Test
+    void shouldNotRouteCustomerProfileWithUnsupportedHttpMethod() {
         RouterFunction<ServerResponse> routes =
                 customerGatewayRoutes.customerRoutes(
                         "http://localhost:8083"
@@ -43,7 +60,7 @@ class CustomerGatewayRoutesTest {
         assertFalse(
                 routes.route(
                         request(
-                                "POST",
+                                "PUT",
                                 "/api/v1/customers/me"
                         )
                 ).isPresent()
