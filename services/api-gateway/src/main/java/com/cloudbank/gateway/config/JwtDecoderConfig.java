@@ -1,5 +1,8 @@
 package com.cloudbank.gateway.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.converter.RsaKeyConverters;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -13,8 +16,11 @@ import java.io.InputStream;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Objects;
 
+@Configuration
+@EnableConfigurationProperties(JwtVerificationProperties.class)
 public class JwtDecoderConfig {
 
+    @Bean
     public JwtDecoder jwtDecoder(
             JwtVerificationProperties properties
     ) throws IOException {
