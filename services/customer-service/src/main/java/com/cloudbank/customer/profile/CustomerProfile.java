@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Entity
@@ -105,7 +106,8 @@ public class CustomerProfile {
 
     @PrePersist
     void onCreate() {
-        Instant now = Instant.now();
+        Instant now =
+                databaseTimestamp();
 
         if (createdAt == null) {
             createdAt = now;
@@ -120,7 +122,15 @@ public class CustomerProfile {
 
     @PreUpdate
     void onUpdate() {
-        updatedAt = Instant.now();
+        updatedAt = databaseTimestamp();
+    }
+
+    private Instant databaseTimestamp() {
+        return Instant
+                .now()
+                .truncatedTo(
+                        ChronoUnit.MICROS
+                );
     }
 
     public void replaceDetails(
