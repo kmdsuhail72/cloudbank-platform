@@ -27,6 +27,10 @@ public class CustomerGatewayRoutes {
                         "/api/v1/customers/me",
                         HandlerFunctions.http()
                 )
+                .PUT(
+                        "/api/v1/customers/me",
+                        HandlerFunctions.http()
+                )
                 .before(
                         BeforeFilterFunctions.uri(
                                 customerServiceBaseUrl

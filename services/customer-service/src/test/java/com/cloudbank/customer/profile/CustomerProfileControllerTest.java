@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -378,6 +379,201 @@ class CustomerProfileControllerTest {
                                         {
                                           "firstName": "Suhail",
                                           "lastName": "Ahmed",
+                                          "dateOfBirth": "2999-01-01"
+                                        }
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isBadRequest()
+                );
+    }
+
+
+    @Test
+    void shouldRequireAuthenticationForProfileUpdate()
+            throws Exception {
+
+        mockMvc.perform(
+                        put(
+                                "/api/v1/customers/me"
+                        )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        "{}"
+                                )
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+    }
+
+    @Test
+    void shouldUpdateProfileForAuthenticatedSubject()
+            throws Exception {
+
+        CustomerProfileUpdateRequest request =
+                new CustomerProfileUpdateRequest(
+                        "Updated",
+                        "Customer",
+                        "+91-8888888888",
+                        java.time.LocalDate.of(
+                                1998,
+                                1,
+                                15
+                        )
+                );
+
+        CustomerProfile profile =
+                new CustomerProfile(
+                        AUTH_USER_ID,
+                        request.firstName(),
+                        request.lastName(),
+                        request.phoneNumber(),
+                        request.dateOfBirth()
+                );
+
+        when(
+                service.update(
+                        AUTH_USER_ID,
+                        request
+                )
+        ).thenReturn(
+                Optional.of(
+                        profile
+                )
+        );
+
+        mockMvc.perform(
+                        put(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "firstName": "Updated",
+                                          "lastName": "Customer",
+                                          "phoneNumber": "+91-8888888888",
+                                          "dateOfBirth": "1998-01-15"
+                                        }
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.firstName"
+                        ).value(
+                                "Updated"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.lastName"
+                        ).value(
+                                "Customer"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.phoneNumber"
+                        ).value(
+                                "+91-8888888888"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.dateOfBirth"
+                        ).value(
+                                "1998-01-15"
+                        )
+                );
+
+        verify(
+                service
+        ).update(
+                AUTH_USER_ID,
+                request
+        );
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenUpdatingMissingProfile()
+            throws Exception {
+
+        CustomerProfileUpdateRequest request =
+                new CustomerProfileUpdateRequest(
+                        "Updated",
+                        "Customer",
+                        null,
+                        null
+                );
+
+        when(
+                service.update(
+                        AUTH_USER_ID,
+                        request
+                )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        mockMvc.perform(
+                        put(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "firstName": "Updated",
+                                          "lastName": "Customer"
+                                        }
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isNotFound()
+                );
+    }
+
+    @Test
+    void shouldRejectFutureDateOfBirthOnUpdate()
+            throws Exception {
+
+        mockMvc.perform(
+                        put(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "firstName": "Updated",
+                                          "lastName": "Customer",
                                           "dateOfBirth": "2999-01-01"
                                         }
                                         """

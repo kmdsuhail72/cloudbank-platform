@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -208,6 +209,199 @@ class CustomerProfileServiceTest {
         assertEquals(
                 CustomerStatus.ACTIVE,
                 result.getStatus()
+        );
+    }
+
+    @Test
+    void shouldReplaceExistingProfileDetails() {
+        UUID authUserId =
+                UUID.randomUUID();
+
+        CustomerProfile existing =
+                new CustomerProfile(
+                        authUserId,
+                        "Old",
+                        "Name",
+                        "+91-1111111111",
+                        LocalDate.of(
+                                1990,
+                                1,
+                                1
+                        )
+                );
+
+        CustomerProfileUpdateRequest request =
+                new CustomerProfileUpdateRequest(
+                        "New",
+                        "Customer",
+                        "+91-2222222222",
+                        LocalDate.of(
+                                1998,
+                                1,
+                                15
+                        )
+                );
+
+        when(
+                repository.findByAuthUserId(
+                        authUserId
+                )
+        ).thenReturn(
+                Optional.of(
+                        existing
+                )
+        );
+
+        when(
+                repository.saveAndFlush(
+                        existing
+                )
+        ).thenReturn(
+                existing
+        );
+
+        CustomerProfile updated =
+                service.update(
+                        authUserId,
+                        request
+                ).orElseThrow();
+
+        assertEquals(
+                "New",
+                updated.getFirstName()
+        );
+
+        assertEquals(
+                "Customer",
+                updated.getLastName()
+        );
+
+        assertEquals(
+                "+91-2222222222",
+                updated.getPhoneNumber()
+        );
+
+        assertEquals(
+                LocalDate.of(
+                        1998,
+                        1,
+                        15
+                ),
+                updated.getDateOfBirth()
+        );
+
+        assertEquals(
+                authUserId,
+                updated.getAuthUserId()
+        );
+    }
+
+    @Test
+    void shouldReturnEmptyWhenUpdatingMissingProfile() {
+        UUID authUserId =
+                UUID.randomUUID();
+
+        CustomerProfileUpdateRequest request =
+                new CustomerProfileUpdateRequest(
+                        "New",
+                        "Customer",
+                        null,
+                        null
+                );
+
+        when(
+                repository.findByAuthUserId(
+                        authUserId
+                )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        Optional<CustomerProfile> result =
+                service.update(
+                        authUserId,
+                        request
+                );
+
+        assertTrue(
+                result.isEmpty()
+        );
+    }
+
+    @Test
+    void shouldClearNullableProfileDetailsDuringReplacement() {
+        UUID authUserId =
+                UUID.randomUUID();
+
+        CustomerProfile existing =
+                new CustomerProfile(
+                        authUserId,
+                        "Old",
+                        "Customer",
+                        "+91-1111111111",
+                        LocalDate.of(
+                                1990,
+                                1,
+                                1
+                        )
+                );
+
+        CustomerProfileUpdateRequest request =
+                new CustomerProfileUpdateRequest(
+                        null,
+                        null,
+                        null,
+                        null
+                );
+
+        when(
+                repository.findByAuthUserId(
+                        authUserId
+                )
+        ).thenReturn(
+                Optional.of(
+                        existing
+                )
+        );
+
+        when(
+                repository.saveAndFlush(
+                        existing
+                )
+        ).thenReturn(
+                existing
+        );
+
+        CustomerProfile updated =
+                service.update(
+                        authUserId,
+                        request
+                ).orElseThrow();
+
+        assertNull(
+                updated.getFirstName()
+        );
+
+        assertNull(
+                updated.getLastName()
+        );
+
+        assertNull(
+                updated.getPhoneNumber()
+        );
+
+        assertNull(
+                updated.getDateOfBirth()
+        );
+
+        assertEquals(
+                authUserId,
+                updated.getAuthUserId()
+        );
+
+        assertEquals(
+                CustomerStatus.ACTIVE,
+                updated.getStatus()
         );
     }
 

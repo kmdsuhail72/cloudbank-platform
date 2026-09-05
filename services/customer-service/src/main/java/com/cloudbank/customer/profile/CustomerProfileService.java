@@ -58,6 +58,31 @@ public class CustomerProfileService {
         );
     }
 
+    @Transactional
+    public Optional<CustomerProfile> update(
+            UUID authUserId,
+            CustomerProfileUpdateRequest request
+    ) {
+        return repository
+                .findByAuthUserId(
+                        authUserId
+                )
+                .map(
+                        profile -> {
+                            profile.replaceDetails(
+                                    request.firstName(),
+                                    request.lastName(),
+                                    request.phoneNumber(),
+                                    request.dateOfBirth()
+                            );
+
+                            return repository.saveAndFlush(
+                                    profile
+                            );
+                        }
+                );
+    }
+
     private CustomerProfile saveProfile(
             CustomerProfile profile
     ) {

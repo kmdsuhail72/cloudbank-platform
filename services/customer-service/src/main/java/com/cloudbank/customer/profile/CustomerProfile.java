@@ -123,6 +123,18 @@ public class CustomerProfile {
         updatedAt = Instant.now();
     }
 
+    public void replaceDetails(
+            String firstName,
+            String lastName,
+            String phoneNumber,
+            LocalDate dateOfBirth
+    ) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phoneNumber = phoneNumber;
+        this.dateOfBirth = dateOfBirth;
+    }
+
     public UUID getId() {
         return id;
     }

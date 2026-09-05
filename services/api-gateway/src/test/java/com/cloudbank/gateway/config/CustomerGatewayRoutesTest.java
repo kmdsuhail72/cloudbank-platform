@@ -51,6 +51,23 @@ class CustomerGatewayRoutesTest {
     }
 
     @Test
+    void shouldRouteCustomerProfileUpdatePath() {
+        RouterFunction<ServerResponse> routes =
+                customerGatewayRoutes.customerRoutes(
+                        "http://localhost:8083"
+                );
+
+        assertTrue(
+                routes.route(
+                        request(
+                                "PUT",
+                                "/api/v1/customers/me"
+                        )
+                ).isPresent()
+        );
+    }
+
+    @Test
     void shouldNotRouteCustomerProfileWithUnsupportedHttpMethod() {
         RouterFunction<ServerResponse> routes =
                 customerGatewayRoutes.customerRoutes(
@@ -60,7 +77,7 @@ class CustomerGatewayRoutesTest {
         assertFalse(
                 routes.route(
                         request(
-                                "PUT",
+                                "PATCH",
                                 "/api/v1/customers/me"
                         )
                 ).isPresent()

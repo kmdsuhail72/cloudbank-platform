@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -62,6 +63,29 @@ public class CustomerProfileController {
                         CustomerProfileResponse.from(
                                 profile
                         )
+                );
+    }
+
+    @PutMapping("/api/v1/customers/me")
+    public ResponseEntity<CustomerProfileResponse> update(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody CustomerProfileUpdateRequest request
+    ) {
+        return service
+                .update(
+                        authUserId(jwt),
+                        request
+                )
+                .map(
+                        CustomerProfileResponse::from
+                )
+                .map(
+                        ResponseEntity::ok
+                )
+                .orElseGet(
+                        () -> ResponseEntity
+                                .notFound()
+                                .build()
                 );
     }
 
