@@ -7,6 +7,7 @@ import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -141,6 +142,72 @@ class CustomerProfileServiceTest {
                 repository
         ).saveAndFlush(
                 any(CustomerProfile.class)
+        );
+    }
+
+    @Test
+    void shouldCreateProfileWithProvidedDetails() {
+        UUID authUserId =
+                UUID.randomUUID();
+
+        LocalDate dateOfBirth =
+                LocalDate.of(
+                        1998,
+                        1,
+                        15
+                );
+
+        CustomerProfileCreateRequest request =
+                new CustomerProfileCreateRequest(
+                        "Suhail",
+                        "Ahmed",
+                        "+91-9999999999",
+                        dateOfBirth
+                );
+
+        when(
+                repository.saveAndFlush(
+                        any(CustomerProfile.class)
+                )
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        CustomerProfile result =
+                service.create(
+                        authUserId,
+                        request
+                );
+
+        assertEquals(
+                authUserId,
+                result.getAuthUserId()
+        );
+
+        assertEquals(
+                "Suhail",
+                result.getFirstName()
+        );
+
+        assertEquals(
+                "Ahmed",
+                result.getLastName()
+        );
+
+        assertEquals(
+                "+91-9999999999",
+                result.getPhoneNumber()
+        );
+
+        assertEquals(
+                dateOfBirth,
+                result.getDateOfBirth()
+        );
+
+        assertEquals(
+                CustomerStatus.ACTIVE,
+                result.getStatus()
         );
     }
 

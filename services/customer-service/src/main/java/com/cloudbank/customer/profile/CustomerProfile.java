@@ -78,8 +78,28 @@ public class CustomerProfile {
     }
 
     public CustomerProfile(UUID authUserId) {
+        this(
+                authUserId,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    public CustomerProfile(
+            UUID authUserId,
+            String firstName,
+            String lastName,
+            String phoneNumber,
+            LocalDate dateOfBirth
+    ) {
         this.id = UUID.randomUUID();
         this.authUserId = authUserId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phoneNumber = phoneNumber;
+        this.dateOfBirth = dateOfBirth;
         this.status = CustomerStatus.ACTIVE;
     }
 

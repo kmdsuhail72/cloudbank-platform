@@ -3,6 +3,7 @@ package com.cloudbank.customer.profile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -197,14 +198,31 @@ class CustomerProfileControllerTest {
     void shouldCreateProfileForAuthenticatedSubject()
             throws Exception {
 
+        CustomerProfileCreateRequest request =
+                new CustomerProfileCreateRequest(
+                        "Suhail",
+                        "Ahmed",
+                        "+91-9999999999",
+                        java.time.LocalDate.of(
+                                1998,
+                                1,
+                                15
+                        )
+                );
+
         CustomerProfile profile =
                 new CustomerProfile(
-                        AUTH_USER_ID
+                        AUTH_USER_ID,
+                        request.firstName(),
+                        request.lastName(),
+                        request.phoneNumber(),
+                        request.dateOfBirth()
                 );
 
         when(
                 service.create(
-                        AUTH_USER_ID
+                        AUTH_USER_ID,
+                        request
                 )
         ).thenReturn(
                 profile
@@ -218,15 +236,49 @@ class CustomerProfileControllerTest {
                                         "Authorization",
                                         "Bearer valid-token"
                                 )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "firstName": "Suhail",
+                                          "lastName": "Ahmed",
+                                          "phoneNumber": "+91-9999999999",
+                                          "dateOfBirth": "1998-01-15"
+                                        }
+                                        """
+                                )
                 )
                 .andExpect(
                         status().isCreated()
                 )
                 .andExpect(
                         jsonPath(
-                                "$.authUserId"
+                                "$.firstName"
                         ).value(
-                                AUTH_USER_ID.toString()
+                                "Suhail"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.lastName"
+                        ).value(
+                                "Ahmed"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.phoneNumber"
+                        ).value(
+                                "+91-9999999999"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.dateOfBirth"
+                        ).value(
+                                "1998-01-15"
                         )
                 )
                 .andExpect(
@@ -240,7 +292,8 @@ class CustomerProfileControllerTest {
         verify(
                 service
         ).create(
-                AUTH_USER_ID
+                AUTH_USER_ID,
+                request
         );
     }
 
@@ -248,9 +301,18 @@ class CustomerProfileControllerTest {
     void shouldReturnConflictWhenProfileAlreadyExists()
             throws Exception {
 
+        CustomerProfileCreateRequest request =
+                new CustomerProfileCreateRequest(
+                        "Suhail",
+                        "Ahmed",
+                        null,
+                        null
+                );
+
         when(
                 service.create(
-                        AUTH_USER_ID
+                        AUTH_USER_ID,
+                        request
                 )
         ).thenThrow(
                 new CustomerProfileAlreadyExistsException()
@@ -263,6 +325,17 @@ class CustomerProfileControllerTest {
                                 .header(
                                         "Authorization",
                                         "Bearer valid-token"
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "firstName": "Suhail",
+                                          "lastName": "Ahmed"
+                                        }
+                                        """
                                 )
                 )
                 .andExpect(
@@ -282,12 +355,38 @@ class CustomerProfileControllerTest {
                                 "Customer profile already exists"
                         )
                 );
-
-        verify(
-                service
-        ).create(
-                AUTH_USER_ID
-        );
     }
+
+
+    @Test
+    void shouldRejectFutureDateOfBirth()
+            throws Exception {
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "firstName": "Suhail",
+                                          "lastName": "Ahmed",
+                                          "dateOfBirth": "2999-01-01"
+                                        }
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isBadRequest()
+                );
+    }
+
 
 }

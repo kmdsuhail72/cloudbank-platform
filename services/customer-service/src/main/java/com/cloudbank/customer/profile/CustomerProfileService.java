@@ -35,11 +35,32 @@ public class CustomerProfileService {
     public CustomerProfile create(
             UUID authUserId
     ) {
-        CustomerProfile profile =
+        return saveProfile(
                 new CustomerProfile(
                         authUserId
-                );
+                )
+        );
+    }
 
+    @Transactional
+    public CustomerProfile create(
+            UUID authUserId,
+            CustomerProfileCreateRequest request
+    ) {
+        return saveProfile(
+                new CustomerProfile(
+                        authUserId,
+                        request.firstName(),
+                        request.lastName(),
+                        request.phoneNumber(),
+                        request.dateOfBirth()
+                )
+        );
+    }
+
+    private CustomerProfile saveProfile(
+            CustomerProfile profile
+    ) {
         try {
             return repository.saveAndFlush(
                     profile
