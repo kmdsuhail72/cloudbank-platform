@@ -20,6 +20,7 @@ import java.util.UUID;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -177,4 +178,116 @@ class CustomerProfileControllerTest {
                 AUTH_USER_ID
         );
     }
+
+    @Test
+    void shouldRequireAuthenticationForProfileCreation()
+            throws Exception {
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/customers/me"
+                        )
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+    }
+
+    @Test
+    void shouldCreateProfileForAuthenticatedSubject()
+            throws Exception {
+
+        CustomerProfile profile =
+                new CustomerProfile(
+                        AUTH_USER_ID
+                );
+
+        when(
+                service.create(
+                        AUTH_USER_ID
+                )
+        ).thenReturn(
+                profile
+        );
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                )
+                .andExpect(
+                        status().isCreated()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.authUserId"
+                        ).value(
+                                AUTH_USER_ID.toString()
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.status"
+                        ).value(
+                                "ACTIVE"
+                        )
+                );
+
+        verify(
+                service
+        ).create(
+                AUTH_USER_ID
+        );
+    }
+
+    @Test
+    void shouldReturnConflictWhenProfileAlreadyExists()
+            throws Exception {
+
+        when(
+                service.create(
+                        AUTH_USER_ID
+                )
+        ).thenThrow(
+                new CustomerProfileAlreadyExistsException()
+        );
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                )
+                .andExpect(
+                        status().isConflict()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.error"
+                        ).value(
+                                "CUSTOMER_PROFILE_ALREADY_EXISTS"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.message"
+                        ).value(
+                                "Customer profile already exists"
+                        )
+                );
+
+        verify(
+                service
+        ).create(
+                AUTH_USER_ID
+        );
+    }
+
 }

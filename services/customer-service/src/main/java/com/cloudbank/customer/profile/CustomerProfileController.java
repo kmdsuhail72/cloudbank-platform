@@ -1,9 +1,11 @@
 package com.cloudbank.customer.profile;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -23,14 +25,9 @@ public class CustomerProfileController {
     public ResponseEntity<CustomerProfileResponse> me(
             @AuthenticationPrincipal Jwt jwt
     ) {
-        UUID authUserId =
-                UUID.fromString(
-                        jwt.getSubject()
-                );
-
         return service
                 .findByAuthUserId(
-                        authUserId
+                        authUserId(jwt)
                 )
                 .map(
                         CustomerProfileResponse::from
@@ -43,5 +40,31 @@ public class CustomerProfileController {
                                 .notFound()
                                 .build()
                 );
+    }
+
+    @PostMapping("/api/v1/customers/me")
+    public ResponseEntity<CustomerProfileResponse> create(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        CustomerProfile profile =
+                service.create(
+                        authUserId(jwt)
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(
+                        CustomerProfileResponse.from(
+                                profile
+                        )
+                );
+    }
+
+    private UUID authUserId(
+            Jwt jwt
+    ) {
+        return UUID.fromString(
+                jwt.getSubject()
+        );
     }
 }
