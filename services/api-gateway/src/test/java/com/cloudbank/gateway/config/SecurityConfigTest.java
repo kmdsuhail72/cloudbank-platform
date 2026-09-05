@@ -117,6 +117,19 @@ class SecurityConfigTest {
     }
 
     @Test
+    void shouldNotExposeDirectErrorEndpoint()
+            throws Exception {
+        mockMvc.perform(
+                        get(
+                                "/error"
+                        )
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+    }
+
+    @Test
     void shouldAllowHealthWithoutBearerToken()
             throws Exception {
         mockMvc.perform(
@@ -158,6 +171,11 @@ class SecurityConfigTest {
         @GetMapping("/api/v1/customers/me")
         String customer() {
             return "customer";
+        }
+
+        @GetMapping("/error")
+        String error() {
+            return "error";
         }
 
         @GetMapping("/actuator/health")

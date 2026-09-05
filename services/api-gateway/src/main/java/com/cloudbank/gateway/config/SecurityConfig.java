@@ -1,5 +1,7 @@
 package com.cloudbank.gateway.config;
 
+import jakarta.servlet.DispatcherType;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,6 +34,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         authorization ->
                                 authorization
+                                        .dispatcherTypeMatchers(
+                                                DispatcherType.ERROR
+                                        )
+                                        .permitAll()
                                         .requestMatchers(
                                                 HttpMethod.GET,
                                                 "/actuator/health"
