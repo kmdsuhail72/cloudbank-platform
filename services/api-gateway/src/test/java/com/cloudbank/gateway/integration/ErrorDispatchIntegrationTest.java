@@ -68,7 +68,7 @@ class ErrorDispatchIntegrationTest {
                                 URI.create(
                                         "http://localhost:"
                                                 + port
-                                                + "/api/v1/customers/me"
+                                                + "/api/v1/nonexistent-route"
                                 )
                         )
                         .header(
