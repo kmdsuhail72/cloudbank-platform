@@ -117,6 +117,19 @@ class SecurityConfigTest {
     }
 
     @Test
+    void shouldAllowHealthWithoutBearerToken()
+            throws Exception {
+        mockMvc.perform(
+                        get(
+                                "/actuator/health"
+                        )
+                )
+                .andExpect(
+                        status().isOk()
+                );
+    }
+
+    @Test
     void shouldNotTreatGetLoginAsPublic()
             throws Exception {
         mockMvc.perform(
@@ -145,6 +158,11 @@ class SecurityConfigTest {
         @GetMapping("/api/v1/customers/me")
         String customer() {
             return "customer";
+        }
+
+        @GetMapping("/actuator/health")
+        String health() {
+            return "UP";
         }
 
         @GetMapping("/api/v1/auth/login")

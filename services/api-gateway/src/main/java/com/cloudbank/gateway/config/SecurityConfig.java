@@ -33,6 +33,11 @@ public class SecurityConfig {
                         authorization ->
                                 authorization
                                         .requestMatchers(
+                                                HttpMethod.GET,
+                                                "/actuator/health"
+                                        )
+                                        .permitAll()
+                                        .requestMatchers(
                                                 HttpMethod.POST,
                                                 "/api/v1/auth/login",
                                                 "/api/v1/auth/register"
