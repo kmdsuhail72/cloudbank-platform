@@ -49,6 +49,9 @@ class AccountControllerTest {
     private AccountCreationService service;
 
     @MockitoBean
+    private AccountQueryService queryService;
+
+    @MockitoBean
     private JwtDecoder jwtDecoder;
 
     @BeforeEach
