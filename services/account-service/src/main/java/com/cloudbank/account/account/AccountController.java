@@ -7,11 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 public class AccountController {
@@ -70,6 +72,25 @@ public class AccountController {
 
         return ResponseEntity.ok(
                 accounts
+        );
+    }
+
+    @GetMapping("/api/v1/accounts/{accountId}")
+    public ResponseEntity<AccountResponse> get(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID accountId
+    ) {
+        Account account =
+                queryService
+                        .findCurrentCustomerAccount(
+                                jwt.getTokenValue(),
+                                accountId
+                        );
+
+        return ResponseEntity.ok(
+                AccountResponse.from(
+                        account
+                )
         );
     }
 }

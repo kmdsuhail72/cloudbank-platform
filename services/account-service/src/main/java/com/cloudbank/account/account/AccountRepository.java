@@ -17,6 +17,11 @@ public interface AccountRepository
             UUID customerId
     );
 
+    Optional<Account> findByIdAndCustomerId(
+            UUID id,
+            UUID customerId
+    );
+
     boolean existsByAccountNumber(
             String accountNumber
     );

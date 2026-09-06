@@ -29,16 +29,44 @@ public class AccountQueryService {
             String accessToken
     ) {
         UUID customerId =
-                customerProfileClient
-                        .findCurrentCustomerId(
-                                accessToken
-                        )
-                        .orElseThrow(
-                                CustomerProfileRequiredException::new
-                        );
+                currentCustomerId(
+                        accessToken
+                );
 
         return repository.findByCustomerId(
                 customerId
         );
+    }
+
+    @Transactional(readOnly = true)
+    public Account findCurrentCustomerAccount(
+            String accessToken,
+            UUID accountId
+    ) {
+        UUID customerId =
+                currentCustomerId(
+                        accessToken
+                );
+
+        return repository
+                .findByIdAndCustomerId(
+                        accountId,
+                        customerId
+                )
+                .orElseThrow(
+                        AccountNotFoundException::new
+                );
+    }
+
+    private UUID currentCustomerId(
+            String accessToken
+    ) {
+        return customerProfileClient
+                .findCurrentCustomerId(
+                        accessToken
+                )
+                .orElseThrow(
+                        CustomerProfileRequiredException::new
+                );
     }
 }

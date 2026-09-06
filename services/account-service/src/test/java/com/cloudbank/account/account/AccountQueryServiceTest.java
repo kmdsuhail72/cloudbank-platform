@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -21,6 +22,11 @@ class AccountQueryServiceTest {
     private static final UUID CUSTOMER_ID =
             UUID.fromString(
                     "22222222-2222-2222-2222-222222222222"
+            );
+
+    private static final UUID ACCOUNT_ID =
+            UUID.fromString(
+                    "33333333-3333-3333-3333-333333333333"
             );
 
     private AccountRepository repository;
@@ -51,20 +57,12 @@ class AccountQueryServiceTest {
     @Test
     void shouldReturnAccountsOwnedByResolvedCustomer() {
 
-        Account savings =
+        Account account =
                 new Account(
                         CUSTOMER_ID,
                         "CB11111111111111111111111111111111",
                         AccountType.SAVINGS,
                         "INR"
-                );
-
-        Account checking =
-                new Account(
-                        CUSTOMER_ID,
-                        "CB22222222222222222222222222222222",
-                        AccountType.CHECKING,
-                        "USD"
                 );
 
         when(
@@ -84,8 +82,7 @@ class AccountQueryServiceTest {
                 )
         ).thenReturn(
                 List.of(
-                        savings,
-                        checking
+                        account
                 )
         );
 
@@ -96,8 +93,7 @@ class AccountQueryServiceTest {
 
         assertEquals(
                 List.of(
-                        savings,
-                        checking
+                        account
                 ),
                 accounts
         );
@@ -110,7 +106,7 @@ class AccountQueryServiceTest {
     }
 
     @Test
-    void shouldRejectQueryWhenCustomerProfileIsMissing() {
+    void shouldRejectListWhenCustomerProfileIsMissing() {
 
         when(
                 customerProfileClient
@@ -134,6 +130,91 @@ class AccountQueryServiceTest {
                 never()
         ).findByCustomerId(
                 CUSTOMER_ID
+        );
+    }
+
+    @Test
+    void shouldReturnAccountOnlyForResolvedCustomer() {
+
+        Account account =
+                new Account(
+                        CUSTOMER_ID,
+                        "CB22222222222222222222222222222222",
+                        AccountType.CHECKING,
+                        "USD"
+                );
+
+        when(
+                customerProfileClient
+                        .findCurrentCustomerId(
+                                "valid-token"
+                        )
+        ).thenReturn(
+                Optional.of(
+                        CUSTOMER_ID
+                )
+        );
+
+        when(
+                repository.findByIdAndCustomerId(
+                        ACCOUNT_ID,
+                        CUSTOMER_ID
+                )
+        ).thenReturn(
+                Optional.of(
+                        account
+                )
+        );
+
+        Account result =
+                service.findCurrentCustomerAccount(
+                        "valid-token",
+                        ACCOUNT_ID
+                );
+
+        assertSame(
+                account,
+                result
+        );
+
+        verify(
+                repository
+        ).findByIdAndCustomerId(
+                ACCOUNT_ID,
+                CUSTOMER_ID
+        );
+    }
+
+    @Test
+    void shouldHideMissingOrUnownedAccountAsNotFound() {
+
+        when(
+                customerProfileClient
+                        .findCurrentCustomerId(
+                                "valid-token"
+                        )
+        ).thenReturn(
+                Optional.of(
+                        CUSTOMER_ID
+                )
+        );
+
+        when(
+                repository.findByIdAndCustomerId(
+                        ACCOUNT_ID,
+                        CUSTOMER_ID
+                )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        assertThrows(
+                AccountNotFoundException.class,
+                () ->
+                        service.findCurrentCustomerAccount(
+                                "valid-token",
+                                ACCOUNT_ID
+                        )
         );
     }
 }
