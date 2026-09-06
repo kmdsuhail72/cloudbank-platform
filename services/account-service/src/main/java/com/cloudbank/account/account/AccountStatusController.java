@@ -38,7 +38,9 @@ public class AccountStatusController {
                         .updateCurrentCustomerAccountStatus(
                                 jwt.getTokenValue(),
                                 accountId,
-                                request.status()
+                                AccountStatus.valueOf(
+                                        request.status()
+                                )
                         );
 
         return ResponseEntity.ok(

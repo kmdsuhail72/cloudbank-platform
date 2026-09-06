@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -107,6 +108,41 @@ public class AccountExceptionHandler {
                 )
                 .body(
                         response
+                );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidPathParameter(
+            MethodArgumentTypeMismatchException exception
+    ) {
+        if ("accountId".equals(
+                exception.getName()
+        )) {
+            return ResponseEntity
+                    .status(
+                            HttpStatus.BAD_REQUEST
+                    )
+                    .body(
+                            Map.of(
+                                    "error",
+                                    "INVALID_ACCOUNT_ID",
+                                    "message",
+                                    "Account ID must be a valid UUID"
+                            )
+                    );
+        }
+
+        return ResponseEntity
+                .status(
+                        HttpStatus.BAD_REQUEST
+                )
+                .body(
+                        Map.of(
+                                "error",
+                                "INVALID_PATH_PARAMETER",
+                                "message",
+                                "Path parameter has an invalid value"
+                        )
                 );
     }
 

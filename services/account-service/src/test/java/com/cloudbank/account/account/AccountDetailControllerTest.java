@@ -230,4 +230,41 @@ class AccountDetailControllerTest {
                         )
                 );
     }
+    @Test
+    void shouldRejectMalformedAccountIdOnDetail()
+            throws Exception {
+
+        mockMvc.perform(
+                        org.springframework.test.web.servlet.request
+                                .MockMvcRequestBuilders.get(
+                                        "/api/v1/accounts/not-a-uuid"
+                                )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                )
+                .andExpect(
+                        org.springframework.test.web.servlet.result
+                                .MockMvcResultMatchers.status()
+                                .isBadRequest()
+                )
+                .andExpect(
+                        org.springframework.test.web.servlet.result
+                                .MockMvcResultMatchers.jsonPath(
+                                        "$.error"
+                                ).value(
+                                        "INVALID_ACCOUNT_ID"
+                                )
+                )
+                .andExpect(
+                        org.springframework.test.web.servlet.result
+                                .MockMvcResultMatchers.jsonPath(
+                                        "$.message"
+                                ).value(
+                                        "Account ID must be a valid UUID"
+                                )
+                );
+    }
+
 }

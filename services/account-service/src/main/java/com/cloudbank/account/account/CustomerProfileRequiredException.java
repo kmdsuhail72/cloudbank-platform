@@ -5,7 +5,7 @@ public class CustomerProfileRequiredException
 
     public CustomerProfileRequiredException() {
         super(
-                "Customer profile is required before creating an account"
+                "Customer profile is required for account operations"
         );
     }
 }

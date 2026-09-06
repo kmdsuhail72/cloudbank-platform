@@ -352,7 +352,7 @@ class AccountControllerTest {
                         jsonPath(
                                 "$.message"
                         ).value(
-                                "Customer profile is required before creating an account"
+                                "Customer profile is required for account operations"
                         )
                 );
     }

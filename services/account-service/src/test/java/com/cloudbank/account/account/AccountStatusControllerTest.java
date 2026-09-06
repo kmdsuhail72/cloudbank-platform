@@ -322,4 +322,132 @@ class AccountStatusControllerTest {
                         )
                 );
     }
+
+    @Test
+    void shouldRejectUnknownStatusValue()
+            throws Exception {
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/accounts/{accountId}/status",
+                                ACCOUNT_ID
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        "application/json"
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "status": "PAUSED"
+                                        }
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.error"
+                        ).value(
+                                "VALIDATION_ERROR"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.fieldErrors.status"
+                        ).value(
+                                "Account status must be ACTIVE, FROZEN, or CLOSED"
+                        )
+                );
+    }
+
+    @Test
+    void shouldRejectMalformedStatusJson()
+            throws Exception {
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/accounts/{accountId}/status",
+                                ACCOUNT_ID
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        "application/json"
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "status": "FROZEN"
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.error"
+                        ).value(
+                                "INVALID_JSON"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.message"
+                        ).value(
+                                "Malformed JSON request"
+                        )
+                );
+    }
+
+    @Test
+    void shouldRejectMalformedAccountIdOnStatusUpdate()
+            throws Exception {
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/accounts/not-a-uuid/status"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        "application/json"
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "status": "FROZEN"
+                                        }
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.error"
+                        ).value(
+                                "INVALID_ACCOUNT_ID"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.message"
+                        ).value(
+                                "Account ID must be a valid UUID"
+                        )
+                );
+    }
+
 }
