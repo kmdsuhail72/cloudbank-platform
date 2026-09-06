@@ -51,6 +51,24 @@ class AccountGatewayRoutesTest {
     }
 
     @Test
+    void shouldRouteAccountDetailPath() {
+        RouterFunction<ServerResponse> routes =
+                accountGatewayRoutes.accountRoutes(
+                        "http://localhost:8084"
+                );
+
+        assertTrue(
+                routes.route(
+                        request(
+                                "GET",
+                                "/api/v1/accounts/"
+                                        + "33333333-3333-3333-3333-333333333333"
+                        )
+                ).isPresent()
+        );
+    }
+
+    @Test
     void shouldNotRouteAccountCreationWithPatch() {
         RouterFunction<ServerResponse> routes =
                 accountGatewayRoutes.accountRoutes(

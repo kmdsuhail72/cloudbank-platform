@@ -23,6 +23,10 @@ public class AccountGatewayRoutes {
                         "/api/v1/accounts",
                         HandlerFunctions.http()
                 )
+                .GET(
+                        "/api/v1/accounts/{accountId}",
+                        HandlerFunctions.http()
+                )
                 .POST(
                         "/api/v1/accounts",
                         HandlerFunctions.http()
