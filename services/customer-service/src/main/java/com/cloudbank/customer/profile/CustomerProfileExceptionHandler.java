@@ -2,6 +2,7 @@ package com.cloudbank.customer.profile;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -67,6 +68,25 @@ public class CustomerProfileExceptionHandler {
                 )
                 .body(
                         response
+                );
+    }
+
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleMalformedJson(
+            HttpMessageNotReadableException exception
+    ) {
+        return ResponseEntity
+                .status(
+                        HttpStatus.BAD_REQUEST
+                )
+                .body(
+                        Map.of(
+                                "error",
+                                "INVALID_JSON",
+                                "message",
+                                "Malformed JSON request"
+                        )
                 );
     }
 

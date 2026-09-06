@@ -627,4 +627,87 @@ class CustomerProfileControllerTest {
     }
 
 
+
+    @Test
+    void shouldRejectMalformedJsonOnCreate()
+            throws Exception {
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "firstName": "Suhail",
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.error"
+                        ).value(
+                                "INVALID_JSON"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.message"
+                        ).value(
+                                "Malformed JSON request"
+                        )
+                );
+    }
+
+    @Test
+    void shouldRejectMalformedJsonOnUpdate()
+            throws Exception {
+
+        mockMvc.perform(
+                        put(
+                                "/api/v1/customers/me"
+                        )
+                                .header(
+                                        "Authorization",
+                                        "Bearer valid-token"
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        """
+                                        {
+                                          "firstName": "Updated",
+                                        """
+                                )
+                )
+                .andExpect(
+                        status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.error"
+                        ).value(
+                                "INVALID_JSON"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.message"
+                        ).value(
+                                "Malformed JSON request"
+                        )
+                );
+    }
+
 }
