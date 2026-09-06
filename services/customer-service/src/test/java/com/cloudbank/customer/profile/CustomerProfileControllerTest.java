@@ -386,6 +386,27 @@ class CustomerProfileControllerTest {
                 )
                 .andExpect(
                         status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.error"
+                        ).value(
+                                "VALIDATION_ERROR"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.message"
+                        ).value(
+                                "Request validation failed"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.fieldErrors.dateOfBirth"
+                        ).value(
+                                "Date of birth must not be in the future"
+                        )
                 );
     }
 
@@ -581,6 +602,27 @@ class CustomerProfileControllerTest {
                 )
                 .andExpect(
                         status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.error"
+                        ).value(
+                                "VALIDATION_ERROR"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.message"
+                        ).value(
+                                "Request validation failed"
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.fieldErrors.dateOfBirth"
+                        ).value(
+                                "Date of birth must not be in the future"
+                        )
                 );
     }
 
