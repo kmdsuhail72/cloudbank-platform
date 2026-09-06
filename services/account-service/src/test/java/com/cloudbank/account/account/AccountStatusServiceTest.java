@@ -73,7 +73,7 @@ class AccountStatusServiceTest {
         );
 
         when(
-                repository.findByIdAndCustomerId(
+                repository.findForUpdateByIdAndCustomerId(
                         ACCOUNT_ID,
                         CUSTOMER_ID
                 )
@@ -110,7 +110,7 @@ class AccountStatusServiceTest {
 
         verify(
                 repository
-        ).findByIdAndCustomerId(
+        ).findForUpdateByIdAndCustomerId(
                 ACCOUNT_ID,
                 CUSTOMER_ID
         );
@@ -164,7 +164,7 @@ class AccountStatusServiceTest {
         );
 
         when(
-                repository.findByIdAndCustomerId(
+                repository.findForUpdateByIdAndCustomerId(
                         ACCOUNT_ID,
                         CUSTOMER_ID
                 )
@@ -208,7 +208,7 @@ class AccountStatusServiceTest {
         );
 
         when(
-                repository.findByIdAndCustomerId(
+                repository.findForUpdateByIdAndCustomerId(
                         ACCOUNT_ID,
                         CUSTOMER_ID
                 )

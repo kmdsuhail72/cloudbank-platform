@@ -40,7 +40,7 @@ public class AccountStatusService {
 
         Account account =
                 repository
-                        .findByIdAndCustomerId(
+                        .findForUpdateByIdAndCustomerId(
                                 accountId,
                                 customerId
                         )
