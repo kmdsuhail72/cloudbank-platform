@@ -50,6 +50,24 @@ public class AccountExceptionHandler {
                 );
     }
 
+    @ExceptionHandler(AccountStatusChangeNotAllowedException.class)
+    public ResponseEntity<Map<String, String>> handleStatusChangeNotAllowed(
+            AccountStatusChangeNotAllowedException exception
+    ) {
+        return ResponseEntity
+                .status(
+                        HttpStatus.CONFLICT
+                )
+                .body(
+                        Map.of(
+                                "error",
+                                "ACCOUNT_STATUS_CHANGE_NOT_ALLOWED",
+                                "message",
+                                exception.getMessage()
+                        )
+                );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(
             MethodArgumentNotValidException exception
