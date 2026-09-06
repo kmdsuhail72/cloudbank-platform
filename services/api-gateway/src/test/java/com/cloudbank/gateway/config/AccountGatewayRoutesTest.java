@@ -34,13 +34,13 @@ class AccountGatewayRoutesTest {
     }
 
     @Test
-    void shouldNotRouteAccountCreationWithGet() {
+    void shouldRouteAccountListPath() {
         RouterFunction<ServerResponse> routes =
                 accountGatewayRoutes.accountRoutes(
                         "http://localhost:8084"
                 );
 
-        assertFalse(
+        assertTrue(
                 routes.route(
                         request(
                                 "GET",

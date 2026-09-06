@@ -19,6 +19,10 @@ public class AccountGatewayRoutes {
     ) {
         return GatewayRouterFunctions
                 .route("account-service")
+                .GET(
+                        "/api/v1/accounts",
+                        HandlerFunctions.http()
+                )
                 .POST(
                         "/api/v1/accounts",
                         HandlerFunctions.http()
