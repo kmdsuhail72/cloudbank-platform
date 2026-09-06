@@ -140,6 +140,28 @@ public class Account {
         );
     }
 
+    public void changeCustomerManagedStatus(
+            AccountStatus targetStatus
+    ) {
+        if (targetStatus == null) {
+            throw new IllegalArgumentException(
+                    "Target account status is required"
+            );
+        }
+
+        if (status == AccountStatus.CLOSED
+                || targetStatus == AccountStatus.CLOSED) {
+            throw new AccountStatusChangeNotAllowedException();
+        }
+
+        if (targetStatus != AccountStatus.ACTIVE
+                && targetStatus != AccountStatus.FROZEN) {
+            throw new AccountStatusChangeNotAllowedException();
+        }
+
+        status = targetStatus;
+    }
+
     public UUID getId() {
         return id;
     }
