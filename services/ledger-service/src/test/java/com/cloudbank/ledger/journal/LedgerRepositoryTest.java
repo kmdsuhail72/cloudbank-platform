@@ -94,4 +94,87 @@ class LedgerRepositoryTest {
                         .size()
         );
     }
+
+    @Test
+    void shouldCalculatePostedBalanceFromCreditsAndDebits() {
+        UUID accountId =
+                UUID.randomUUID();
+
+        UUID counterpartyId =
+                UUID.randomUUID();
+
+        LedgerJournal creditJournal =
+                journalRepository.saveAndFlush(
+                        new LedgerJournal(
+                                "TEST_CREDIT",
+                                UUID.randomUUID()
+                        )
+                );
+
+        postingRepository.saveAllAndFlush(
+                List.of(
+                        new LedgerPosting(
+                                creditJournal.getId(),
+                                accountId,
+                                LedgerEntryType.CREDIT,
+                                new BigDecimal(
+                                        "100.0000"
+                                ),
+                                "INR"
+                        ),
+                        new LedgerPosting(
+                                creditJournal.getId(),
+                                counterpartyId,
+                                LedgerEntryType.DEBIT,
+                                new BigDecimal(
+                                        "100.0000"
+                                ),
+                                "INR"
+                        )
+                )
+        );
+
+        LedgerJournal debitJournal =
+                journalRepository.saveAndFlush(
+                        new LedgerJournal(
+                                "TEST_DEBIT",
+                                UUID.randomUUID()
+                        )
+                );
+
+        postingRepository.saveAllAndFlush(
+                List.of(
+                        new LedgerPosting(
+                                debitJournal.getId(),
+                                accountId,
+                                LedgerEntryType.DEBIT,
+                                new BigDecimal(
+                                        "40.0000"
+                                ),
+                                "INR"
+                        ),
+                        new LedgerPosting(
+                                debitJournal.getId(),
+                                counterpartyId,
+                                LedgerEntryType.CREDIT,
+                                new BigDecimal(
+                                        "40.0000"
+                                ),
+                                "INR"
+                        )
+                )
+        );
+
+        assertEquals(
+                new BigDecimal(
+                        "60.0000"
+                ),
+                postingRepository
+                        .calculatePostedBalance(
+                                accountId,
+                                "INR"
+                        )
+        );
+    }
+
 }
