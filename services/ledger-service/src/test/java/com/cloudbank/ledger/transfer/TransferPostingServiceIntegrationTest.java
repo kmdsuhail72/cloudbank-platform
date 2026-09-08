@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
@@ -179,6 +180,15 @@ class TransferPostingServiceIntegrationTest {
                                 "INR"
                         )
                 );
+
+        assertNotNull(
+                first.createdAt()
+        );
+
+        assertEquals(
+                first.createdAt(),
+                retry.createdAt()
+        );
 
         assertEquals(
                 first,

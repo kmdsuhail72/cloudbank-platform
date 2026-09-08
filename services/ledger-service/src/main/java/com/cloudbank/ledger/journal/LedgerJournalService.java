@@ -56,10 +56,13 @@ public class LedgerJournalService {
                         commands
                 );
 
+        LedgerJournal persistedJournal;
+
         try {
-            journalRepository.saveAndFlush(
-                    journal
-            );
+            persistedJournal =
+                    journalRepository.saveAndFlush(
+                            journal
+                    );
         } catch (DataIntegrityViolationException exception) {
             throw new DuplicateLedgerJournalException();
         }
@@ -69,10 +72,10 @@ public class LedgerJournalService {
         );
 
         return new LedgerJournalResult(
-                journal.getId(),
-                journal.getReferenceType(),
-                journal.getReferenceId(),
-                journal.getCreatedAt(),
+                persistedJournal.getId(),
+                persistedJournal.getReferenceType(),
+                persistedJournal.getReferenceId(),
+                persistedJournal.getCreatedAt(),
                 postings.size()
         );
     }

@@ -41,6 +41,17 @@ class LedgerJournalServiceTest {
                         journalRepository,
                         postingRepository
                 );
+
+        when(
+                journalRepository.saveAndFlush(
+                        any(LedgerJournal.class)
+                )
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(
+                                0
+                        )
+        );
     }
 
     @Test
