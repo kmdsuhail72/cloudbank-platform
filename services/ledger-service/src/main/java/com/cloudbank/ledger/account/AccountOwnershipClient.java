@@ -114,10 +114,29 @@ public class AccountOwnershipClient {
                 )
                 || response.currency() == null
                 || response.currency().isBlank()
-                || response.currency().trim().length() != 3) {
+                || response.currency().trim().length() != 3
+                || response.status() == null
+                || response.status().isBlank()
+                || !isKnownStatus(
+                        response.status()
+                )) {
 
             throw new AccountOwnershipVerificationException();
         }
+    }
+
+    private static boolean isKnownStatus(
+            String status
+    ) {
+        return switch (
+                status.trim()
+        ) {
+            case "ACTIVE",
+                 "FROZEN",
+                 "CLOSED" -> true;
+
+            default -> false;
+        };
     }
 
     private static String requireBaseUrl(

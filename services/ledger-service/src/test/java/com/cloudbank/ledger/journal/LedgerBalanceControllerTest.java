@@ -68,7 +68,8 @@ class LedgerBalanceControllerTest {
         ).thenReturn(
                 new AccountOwnershipResponse(
                         accountId,
-                        "INR"
+                        "INR",
+                        "ACTIVE"
                 )
         );
 

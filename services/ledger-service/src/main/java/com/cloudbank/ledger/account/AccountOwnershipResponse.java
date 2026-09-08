@@ -9,6 +9,7 @@ import java.util.UUID;
 )
 public record AccountOwnershipResponse(
         UUID id,
-        String currency
+        String currency,
+        String status
 ) {
 }
