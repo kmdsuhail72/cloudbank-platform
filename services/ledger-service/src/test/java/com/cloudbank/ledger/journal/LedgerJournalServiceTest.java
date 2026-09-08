@@ -42,16 +42,18 @@ class LedgerJournalServiceTest {
                         postingRepository
                 );
 
-        when(
-                journalRepository.saveAndFlush(
-                        any(LedgerJournal.class)
-                )
-        ).thenAnswer(
-                invocation ->
-                        invocation.getArgument(
-                                0
+        org.mockito.Mockito.lenient()
+                .when(
+                        journalRepository.saveAndFlush(
+                                any(LedgerJournal.class)
                         )
-        );
+                )
+                .thenAnswer(
+                        invocation ->
+                                invocation.getArgument(
+                                        0
+                                )
+                );
     }
 
     @Test
