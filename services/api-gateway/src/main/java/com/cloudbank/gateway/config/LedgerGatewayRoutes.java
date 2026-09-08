@@ -23,6 +23,10 @@ public class LedgerGatewayRoutes {
                         "/api/v1/accounts/{accountId}/balance",
                         HandlerFunctions.http()
                 )
+                .POST(
+                        "/api/v1/transfers",
+                        HandlerFunctions.http()
+                )
                 .before(
                         BeforeFilterFunctions.uri(
                                 ledgerServiceBaseUrl

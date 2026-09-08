@@ -72,6 +72,41 @@ class LedgerGatewayRoutesTest {
         );
     }
 
+    @Test
+    void shouldRouteTransferPost() {
+        RouterFunction<ServerResponse> routes =
+                ledgerGatewayRoutes.ledgerRoutes(
+                        "http://localhost:8085"
+                );
+
+        assertTrue(
+                routes.route(
+                        request(
+                                "POST",
+                                "/api/v1/transfers"
+                        )
+                ).isPresent()
+        );
+    }
+
+    @Test
+    void shouldNotRouteTransferGet() {
+        RouterFunction<ServerResponse> routes =
+                ledgerGatewayRoutes.ledgerRoutes(
+                        "http://localhost:8085"
+                );
+
+        assertFalse(
+                routes.route(
+                        request(
+                                "GET",
+                                "/api/v1/transfers"
+                        )
+                ).isPresent()
+        );
+    }
+
+
     private ServerRequest request(
             String method,
             String path
