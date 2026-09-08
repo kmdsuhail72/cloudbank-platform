@@ -27,6 +27,10 @@ public class LedgerGatewayRoutes {
                         "/api/v1/accounts/{accountId}/transactions",
                         HandlerFunctions.http()
                 )
+                .GET(
+                        "/api/v1/accounts/{accountId}/transactions/{postingId}",
+                        HandlerFunctions.http()
+                )
                 .POST(
                         "/api/v1/transfers",
                         HandlerFunctions.http()

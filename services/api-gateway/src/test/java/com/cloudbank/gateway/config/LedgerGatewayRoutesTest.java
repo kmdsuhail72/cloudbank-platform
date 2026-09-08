@@ -146,6 +146,47 @@ class LedgerGatewayRoutesTest {
     }
 
 
+    @Test
+    void shouldRouteAccountTransactionDetail() {
+        RouterFunction<ServerResponse> routes =
+                ledgerGatewayRoutes.ledgerRoutes(
+                        "http://localhost:8085"
+                );
+
+        assertTrue(
+                routes.route(
+                        request(
+                                "GET",
+                                "/api/v1/accounts/"
+                                        + "33333333-3333-3333-3333-333333333333"
+                                        + "/transactions/"
+                                        + "44444444-4444-4444-4444-444444444444"
+                        )
+                ).isPresent()
+        );
+    }
+
+    @Test
+    void shouldNotRouteAccountTransactionDetailWithPost() {
+        RouterFunction<ServerResponse> routes =
+                ledgerGatewayRoutes.ledgerRoutes(
+                        "http://localhost:8085"
+                );
+
+        assertFalse(
+                routes.route(
+                        request(
+                                "POST",
+                                "/api/v1/accounts/"
+                                        + "33333333-3333-3333-3333-333333333333"
+                                        + "/transactions/"
+                                        + "44444444-4444-4444-4444-444444444444"
+                        )
+                ).isPresent()
+        );
+    }
+
+
     private ServerRequest request(
             String method,
             String path
