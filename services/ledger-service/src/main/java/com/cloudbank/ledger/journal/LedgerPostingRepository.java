@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface LedgerPostingRepository
@@ -52,6 +53,30 @@ public interface LedgerPostingRepository
     Page<LedgerTransactionView> findTransactionHistory(
             @Param("accountId") UUID accountId,
             Pageable pageable
+    );
+
+    @Query(
+            value = """
+                    SELECT
+                        p.id AS "postingId",
+                        p.journal_id AS "journalId",
+                        j.reference_type AS "referenceType",
+                        j.reference_id AS "referenceId",
+                        p.entry_type AS "entryType",
+                        p.amount AS "amount",
+                        p.currency AS "currency",
+                        p.created_at AS "createdAt"
+                    FROM ledger_postings p
+                    JOIN ledger_journals j
+                      ON j.id = p.journal_id
+                    WHERE p.id = :postingId
+                      AND p.account_id = :accountId
+                    """,
+            nativeQuery = true
+    )
+    Optional<LedgerTransactionView> findTransactionDetail(
+            @Param("accountId") UUID accountId,
+            @Param("postingId") UUID postingId
     );
 
     @Query(

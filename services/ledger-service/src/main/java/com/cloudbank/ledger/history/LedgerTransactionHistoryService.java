@@ -71,6 +71,33 @@ public class LedgerTransactionHistoryService {
         );
     }
 
+    public LedgerTransactionEntry getTransaction(
+            UUID accountId,
+            UUID postingId
+    ) {
+        Objects.requireNonNull(
+                accountId,
+                "Account ID is required"
+        );
+
+        Objects.requireNonNull(
+                postingId,
+                "Posting ID is required"
+        );
+
+        return postingRepository
+                .findTransactionDetail(
+                        accountId,
+                        postingId
+                )
+                .map(
+                        LedgerTransactionHistoryService::toEntry
+                )
+                .orElseThrow(
+                        TransactionNotFoundException::new
+                );
+    }
+
     private static LedgerTransactionEntry toEntry(
             LedgerTransactionView transaction
     ) {

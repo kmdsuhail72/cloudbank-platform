@@ -29,4 +29,25 @@ public class LedgerTransactionHistoryExceptionHandler {
                         )
                 );
     }
+
+    @ExceptionHandler(
+            TransactionNotFoundException.class
+    )
+    public ResponseEntity<Map<String, String>> handleTransactionNotFound(
+            TransactionNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(
+                        HttpStatus.NOT_FOUND
+                )
+                .body(
+                        Map.of(
+                                "error",
+                                "TRANSACTION_NOT_FOUND",
+                                "message",
+                                "Transaction not found"
+                        )
+                );
+    }
+
 }

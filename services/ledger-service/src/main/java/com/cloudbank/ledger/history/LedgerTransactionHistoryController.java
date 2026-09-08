@@ -70,4 +70,32 @@ public class LedgerTransactionHistoryController {
                 result
         );
     }
+
+    @GetMapping(
+            "/api/v1/accounts/{accountId}/transactions/{postingId}"
+    )
+    public ResponseEntity<LedgerTransactionEntry> getTransaction(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID accountId,
+            @PathVariable UUID postingId
+    ) {
+        AccountOwnershipResponse account =
+                accountOwnershipClient
+                        .requireOwnedAccount(
+                                jwt.getTokenValue(),
+                                accountId
+                        );
+
+        LedgerTransactionEntry result =
+                historyService
+                        .getTransaction(
+                                account.id(),
+                                postingId
+                        );
+
+        return ResponseEntity.ok(
+                result
+        );
+    }
+
 }
