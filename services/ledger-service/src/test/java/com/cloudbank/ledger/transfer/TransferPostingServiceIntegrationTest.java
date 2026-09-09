@@ -1,5 +1,6 @@
 package com.cloudbank.ledger.transfer;
 
+import com.cloudbank.ledger.outbox.OutboxEventRepository;
 import com.cloudbank.ledger.account.AccountOwnershipResponse;
 import com.cloudbank.ledger.journal.LedgerBalanceService;
 import com.cloudbank.ledger.journal.LedgerEntryType;
@@ -54,6 +55,9 @@ class TransferPostingServiceIntegrationTest {
         journalRepository.deleteAll();
         journalRepository.flush();
     }
+
+    @Autowired
+    private OutboxEventRepository outboxEventRepository;
 
     @Test
     void shouldPostTransferAndDeriveBothBalances() {
@@ -626,4 +630,10 @@ class TransferPostingServiceIntegrationTest {
                 status
         );
     }
+
+    @AfterEach
+    void cleanTransferOutboxEvents() {
+        outboxEventRepository.deleteAllInBatch();
+    }
+
 }
