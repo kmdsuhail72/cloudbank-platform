@@ -1,10 +1,35 @@
 services:
 
+  kafka-volume-init:
+    image: busybox:1.36.1
+
+    container_name: cloudbank-kafka-volume-init
+
+    user: "0:0"
+
+    command:
+      - sh
+      - -c
+      - |
+        chown -R 1000:1000 /tmp/kraft-combined-logs
+        stat -c 'volume_owner=%u:%g mode=%a' /tmp/kraft-combined-logs
+
+    volumes:
+      - cloudbank-kafka-data:/tmp/kraft-combined-logs
+
+    networks:
+      - cloudbank-messaging
+
+
   kafka:
     image: apache/kafka:4.0.0
 
     container_name: cloudbank-kafka
     hostname: cloudbank-kafka
+
+    depends_on:
+      kafka-volume-init:
+        condition: service_completed_successfully
 
     restart: unless-stopped
 
