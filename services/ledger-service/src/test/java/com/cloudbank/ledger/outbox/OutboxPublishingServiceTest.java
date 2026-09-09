@@ -2,6 +2,7 @@ package com.cloudbank.ledger.outbox;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,8 +50,9 @@ class OutboxPublishingServiceTest {
                 );
 
         objectMapper =
-                new ObjectMapper()
-                        .findAndRegisterModules();
+                JsonMapper.builder()
+                        .findAndAddModules()
+                        .build();
 
         service =
                 new OutboxPublishingService(
