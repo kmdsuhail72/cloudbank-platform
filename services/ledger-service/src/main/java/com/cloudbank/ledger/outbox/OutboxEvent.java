@@ -202,4 +202,55 @@ public class OutboxEvent {
     public String getLastError() {
         return lastError;
     }
+
+    public void markPublished(
+            Instant publishedAt
+    ) {
+        if (this.publishedAt != null) {
+            throw new IllegalStateException(
+                    "Outbox event is already published"
+            );
+        }
+
+        this.publishedAt =
+                Objects.requireNonNull(
+                        publishedAt,
+                        "Published time is required"
+                );
+
+        this.lastError =
+                null;
+    }
+
+    public void recordFailure(
+            String error
+    ) {
+        if (publishedAt != null) {
+            throw new IllegalStateException(
+                    "Published outbox event cannot fail"
+            );
+        }
+
+        if (attemptCount < Integer.MAX_VALUE) {
+            attemptCount++;
+        }
+
+        if (error == null
+                || error.isBlank()) {
+            lastError =
+                    "Unknown publishing failure";
+            return;
+        }
+
+        String normalized =
+                error.strip();
+
+        lastError =
+                normalized.length() <= 2000
+                        ? normalized
+                        : normalized.substring(
+                                0,
+                                2000
+                        );
+    }
 }
