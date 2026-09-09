@@ -1,5 +1,6 @@
 package com.cloudbank.ledger.transfer;
 
+import com.cloudbank.ledger.outbox.TransferOutboxService;
 import com.cloudbank.ledger.account.AccountOwnershipResponse;
 import com.cloudbank.ledger.journal.LedgerBalanceResult;
 import com.cloudbank.ledger.journal.LedgerBalanceService;
@@ -37,12 +38,15 @@ public class TransferPostingService {
 
     private final LedgerBalanceService balanceService;
 
+    private final TransferOutboxService outboxService;
+
     public TransferPostingService(
             LedgerAdvisoryLockService lockService,
             LedgerJournalRepository journalRepository,
             LedgerPostingRepository postingRepository,
             LedgerJournalService journalService,
-            LedgerBalanceService balanceService
+            LedgerBalanceService balanceService,
+            TransferOutboxService outboxService
     ) {
         this.lockService =
                 Objects.requireNonNull(
@@ -67,6 +71,11 @@ public class TransferPostingService {
         this.balanceService =
                 Objects.requireNonNull(
                         balanceService
+                );
+
+        this.outboxService =
+                Objects.requireNonNull(
+                        outboxService
                 );
     }
 
@@ -191,15 +200,27 @@ public class TransferPostingService {
                         )
                 );
 
-        return new TransferResult(
-                command.requestId(),
-                journal.journalId(),
-                source.id(),
-                destination.id(),
-                command.amount(),
-                sourceCurrency,
-                journal.createdAt()
+        TransferResult result =
+                new TransferResult(
+                        command.requestId(),
+                        journal.journalId(),
+                        source.id(),
+                        destination.id(),
+                        command.amount(),
+                        sourceCurrency,
+                        journal.createdAt()
+                );
+
+        /*
+         * This write participates in the same PostgreSQL transaction
+         * as the journal and postings. If it fails, the complete
+         * transfer transaction must roll back.
+         */
+        outboxService.recordTransferPosted(
+                result
         );
+
+        return result;
     }
 
     private TransferResult existingTransfer(
