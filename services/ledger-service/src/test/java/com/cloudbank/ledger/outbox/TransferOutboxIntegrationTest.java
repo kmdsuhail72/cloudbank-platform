@@ -393,8 +393,9 @@ class TransferOutboxIntegrationTest {
             TransferResult transfer
     ) {
         return """
-                {"requestId":"%s","journalId":"%s","sourceAccountId":"%s","destinationAccountId":"%s","amount":%s,"currency":"%s","postedAt":"%s"}                """.formatted(
+                {"requestId":"%s","actorUserId":"%s","journalId":"%s","sourceAccountId":"%s","destinationAccountId":"%s","amount":%s,"currency":"%s","postedAt":"%s"}                """.formatted(
                         transfer.requestId(),
+                        ACTOR_USER_ID,
                         transfer.journalId(),
                         transfer.sourceAccountId(),
                         transfer.destinationAccountId(),
