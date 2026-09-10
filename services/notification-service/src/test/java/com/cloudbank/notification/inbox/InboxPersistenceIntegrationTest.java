@@ -184,7 +184,9 @@ class InboxPersistenceIntegrationTest {
                         """,
                         eventId,
                         UUID.randomUUID(),
-                        occurredAt,
+                        java.sql.Timestamp.from(
+                                occurredAt
+                        ),
                         "{}"
                 )
         );
