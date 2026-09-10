@@ -80,9 +80,16 @@ class TransferControllerTest {
         );
 
         when(
+                jwt.getSubject()
+        ).thenReturn(
+                ACTOR_USER_ID.toString()
+        );
+
+        when(
                 transferService.transfer(
                         "access-token",
-                        command
+                        command,
+                        ACTOR_USER_ID
                 )
         ).thenReturn(
                 result
@@ -113,7 +120,8 @@ class TransferControllerTest {
                 transferService
         ).transfer(
                 "access-token",
-                command
+                command,
+                ACTOR_USER_ID
         );
     }
 }
