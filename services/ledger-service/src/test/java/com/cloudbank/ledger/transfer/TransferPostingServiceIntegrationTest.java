@@ -93,7 +93,8 @@ class TransferPostingServiceIntegrationTest {
                                 destinationId,
                                 "INR"
                         )
-                );
+                ,
+                        ACTOR_USER_ID);
 
         assertEquals(
                 sourceId,
@@ -175,7 +176,8 @@ class TransferPostingServiceIntegrationTest {
                                 destinationId,
                                 "INR"
                         )
-                );
+                ,
+                        ACTOR_USER_ID);
 
         TransferResult retry =
                 transferPostingService.post(
@@ -188,7 +190,8 @@ class TransferPostingServiceIntegrationTest {
                                 destinationId,
                                 "INR"
                         )
-                );
+                ,
+                        ACTOR_USER_ID);
 
         assertNotNull(
                 first.createdAt()
@@ -246,7 +249,8 @@ class TransferPostingServiceIntegrationTest {
                         destinationId,
                         "INR"
                 )
-        );
+        ,
+                        ACTOR_USER_ID);
 
         assertThrows(
                 TransferIdempotencyConflictException.class,
@@ -265,7 +269,8 @@ class TransferPostingServiceIntegrationTest {
                                 destinationId,
                                 "INR"
                         )
-                )
+                ,
+                        ACTOR_USER_ID)
         );
 
         assertEquals(
@@ -309,7 +314,8 @@ class TransferPostingServiceIntegrationTest {
                                 destinationId,
                                 "INR"
                         )
-                )
+                ,
+                        ACTOR_USER_ID)
         );
 
         assertEquals(
@@ -349,7 +355,8 @@ class TransferPostingServiceIntegrationTest {
                                 destinationId,
                                 "INR"
                         )
-                )
+                ,
+                        ACTOR_USER_ID)
         );
 
         assertEquals(
@@ -384,7 +391,8 @@ class TransferPostingServiceIntegrationTest {
                                 "INR",
                                 "FROZEN"
                         )
-                )
+                ,
+                        ACTOR_USER_ID)
         );
 
         assertEquals(
@@ -418,7 +426,8 @@ class TransferPostingServiceIntegrationTest {
                                 destinationId,
                                 "USD"
                         )
-                )
+                ,
+                        ACTOR_USER_ID)
         );
 
         assertEquals(
@@ -558,7 +567,8 @@ class TransferPostingServiceIntegrationTest {
                     command,
                     source,
                     destination
-            );
+            ,
+                        ACTOR_USER_ID);
 
             return true;
 

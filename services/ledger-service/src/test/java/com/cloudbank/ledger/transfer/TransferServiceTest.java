@@ -105,7 +105,8 @@ class TransferServiceTest {
                         command,
                         source,
                         destination
-                )
+                ,
+                        ACTOR_USER_ID)
         ).thenReturn(
                 expected
         );
@@ -120,7 +121,8 @@ class TransferServiceTest {
                 service.transfer(
                         "access-token",
                         command
-                );
+                ,
+                        ACTOR_USER_ID);
 
         assertEquals(
                 expected,
