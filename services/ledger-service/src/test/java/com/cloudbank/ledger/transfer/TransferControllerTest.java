@@ -23,6 +23,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TransferControllerTest {
 
+    private static final UUID ACTOR_USER_ID =
+            UUID.fromString(
+                    "11111111-1111-1111-1111-111111111111"
+            );
+
     @Mock
     private TransferService transferService;
 

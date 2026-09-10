@@ -6,6 +6,7 @@ import com.cloudbank.ledger.account.AccountOwnershipResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class TransferService {
@@ -31,7 +32,8 @@ public class TransferService {
 
     public TransferResult transfer(
             String accessToken,
-            TransferCommand command
+            TransferCommand command,
+            UUID actorUserId
     ) {
         if (accessToken == null
                 || accessToken.isBlank()) {
@@ -43,6 +45,11 @@ public class TransferService {
         Objects.requireNonNull(
                 command,
                 "Transfer command is required"
+        );
+
+        Objects.requireNonNull(
+                actorUserId,
+                "Actor user ID is required"
         );
 
         AccountOwnershipResponse source =
@@ -62,7 +69,8 @@ public class TransferService {
         return postingService.post(
                 command,
                 source,
-                destination
+                destination,
+                actorUserId
         );
     }
 }

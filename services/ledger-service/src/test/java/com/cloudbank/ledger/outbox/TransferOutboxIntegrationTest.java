@@ -30,6 +30,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 class TransferOutboxIntegrationTest {
 
+    private static final UUID ACTOR_USER_ID =
+            UUID.fromString(
+                    "11111111-1111-1111-1111-111111111111"
+            );
+
     @Autowired
     private TransferPostingService transferPostingService;
 
@@ -85,7 +90,8 @@ class TransferOutboxIntegrationTest {
                         active(
                                 destinationId
                         )
-                );
+                ,
+                        ACTOR_USER_ID);
 
         OutboxEvent event =
                 outboxRepository
@@ -152,7 +158,8 @@ class TransferOutboxIntegrationTest {
                         active(
                                 destinationId
                         )
-                )
+                ,
+                        ACTOR_USER_ID)
         );
 
         assertEquals(
@@ -204,7 +211,8 @@ class TransferOutboxIntegrationTest {
                         active(
                                 destinationId
                         )
-                );
+                ,
+                        ACTOR_USER_ID);
 
         TransferResult retry =
                 transferPostingService.post(
@@ -215,7 +223,8 @@ class TransferOutboxIntegrationTest {
                         active(
                                 destinationId
                         )
-                );
+                ,
+                        ACTOR_USER_ID);
 
         assertEquals(
                 first,
@@ -290,7 +299,8 @@ class TransferOutboxIntegrationTest {
                         active(
                                 destinationId
                         )
-                )
+                ,
+                        ACTOR_USER_ID)
         );
 
         assertTrue(

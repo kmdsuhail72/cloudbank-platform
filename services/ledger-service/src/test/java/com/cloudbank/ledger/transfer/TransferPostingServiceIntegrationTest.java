@@ -32,6 +32,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 class TransferPostingServiceIntegrationTest {
 
+    private static final UUID ACTOR_USER_ID =
+            UUID.fromString(
+                    "11111111-1111-1111-1111-111111111111"
+            );
+
     @Autowired
     private TransferPostingService transferPostingService;
 

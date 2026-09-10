@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @RestController
 public class TransferController {
@@ -36,10 +37,16 @@ public class TransferController {
             );
         }
 
+        UUID actorUserId =
+                UUID.fromString(
+                        jwt.getSubject()
+                );
+
         TransferResult result =
                 transferService.transfer(
                         jwt.getTokenValue(),
-                        request.toCommand()
+                        request.toCommand(),
+                        actorUserId
                 );
 
         return ResponseEntity.ok(

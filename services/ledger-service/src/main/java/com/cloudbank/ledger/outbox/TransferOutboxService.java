@@ -5,6 +5,7 @@ import com.cloudbank.ledger.transfer.TransferResult;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class TransferOutboxService {
@@ -16,7 +17,7 @@ public class TransferOutboxService {
             "TRANSFER_POSTED";
 
     public static final int EVENT_VERSION =
-            1;
+            2;
 
     private final OutboxEventRepository repository;
 
@@ -30,11 +31,17 @@ public class TransferOutboxService {
     }
 
     public OutboxEvent recordTransferPosted(
-            TransferResult transfer
+            TransferResult transfer,
+            UUID actorUserId
     ) {
         Objects.requireNonNull(
                 transfer,
                 "Transfer result is required"
+        );
+
+        Objects.requireNonNull(
+                actorUserId,
+                "Actor user ID is required"
         );
 
         OutboxEvent event =
@@ -44,7 +51,8 @@ public class TransferOutboxService {
                         EVENT_TYPE,
                         EVENT_VERSION,
                         payload(
-                                transfer
+                                transfer,
+                                actorUserId
                         )
                 );
 
@@ -54,11 +62,14 @@ public class TransferOutboxService {
     }
 
     private static String payload(
-            TransferResult transfer
+            TransferResult transfer,
+            UUID actorUserId
     ) {
         return """
-                {"requestId":"%s","journalId":"%s","sourceAccountId":"%s","destinationAccountId":"%s","amount":%s,"currency":"%s","postedAt":"%s"}                """.formatted(
+                {"requestId":"%s","actorUserId":"%s","journalId":"%s","sourceAccountId":"%s","destinationAccountId":"%s","amount":%s,"currency":"%s","postedAt":"%s"}\
+                """.formatted(
                         transfer.requestId(),
+                        actorUserId,
                         transfer.journalId(),
                         transfer.sourceAccountId(),
                         transfer.destinationAccountId(),

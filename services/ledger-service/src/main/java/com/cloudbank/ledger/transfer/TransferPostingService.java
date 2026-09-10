@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class TransferPostingService {
@@ -83,7 +84,8 @@ public class TransferPostingService {
     public TransferResult post(
             TransferCommand command,
             AccountOwnershipResponse source,
-            AccountOwnershipResponse destination
+            AccountOwnershipResponse destination,
+            UUID actorUserId
     ) {
         Objects.requireNonNull(
                 command
@@ -95,6 +97,11 @@ public class TransferPostingService {
 
         Objects.requireNonNull(
                 destination
+        );
+
+        Objects.requireNonNull(
+                actorUserId,
+                "Actor user ID is required"
         );
 
         requireExpectedAccount(
@@ -217,7 +224,8 @@ public class TransferPostingService {
          * transfer transaction must roll back.
          */
         outboxService.recordTransferPosted(
-                result
+                result,
+                actorUserId
         );
 
         return result;
