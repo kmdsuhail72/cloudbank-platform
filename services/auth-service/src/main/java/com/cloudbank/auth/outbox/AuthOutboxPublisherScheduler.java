@@ -1,0 +1,61 @@
+package com.cloudbank.auth.outbox;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Component
+@ConditionalOnProperty(
+        name = "cloudbank.outbox.publisher.enabled",
+        havingValue = "true"
+)
+public class AuthOutboxPublisherScheduler {
+
+    private final AuthOutboxPublishingService
+            publishingService;
+
+    private final int batchSize;
+
+    public AuthOutboxPublisherScheduler(
+            AuthOutboxPublishingService publishingService,
+            @Value(
+                    "${cloudbank.outbox.publisher.batch-size}"
+            )
+            int batchSize
+    ) {
+        this.publishingService =
+                publishingService;
+
+        if (batchSize < 1) {
+            throw new IllegalArgumentException(
+                    "Outbox batch size must be positive"
+            );
+        }
+
+        this.batchSize =
+                batchSize;
+    }
+
+    @Scheduled(
+            fixedDelayString =
+                    "${cloudbank.outbox.publisher.fixed-delay-ms}"
+    )
+    public void publishPendingEvents() {
+        for (int index = 0;
+             index < batchSize;
+             index++) {
+
+            AuthOutboxPublishingService.PublishOutcome
+                    outcome =
+                    publishingService
+                            .publishNextPending();
+
+            if (outcome
+                    != AuthOutboxPublishingService
+                    .PublishOutcome.PUBLISHED) {
+                return;
+            }
+        }
+    }
+}
