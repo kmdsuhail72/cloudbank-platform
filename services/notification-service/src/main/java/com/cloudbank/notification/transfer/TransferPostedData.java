@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record TransferPostedData(
         UUID requestId,
+        UUID actorUserId,
         UUID journalId,
         UUID sourceAccountId,
         UUID destinationAccountId,

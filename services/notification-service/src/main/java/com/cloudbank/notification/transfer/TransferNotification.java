@@ -32,6 +32,9 @@ public class TransferNotification {
     )
     private UUID transferRequestId;
 
+    @Column(name = "actor_user_id")
+    private UUID actorUserId;
+
     @Column(
             name = "journal_id",
             nullable = false
@@ -89,6 +92,32 @@ public class TransferNotification {
             String currency,
             Instant postedAt
     ) {
+        this(
+                id,
+                eventId,
+                transferRequestId,
+                null,
+                journalId,
+                sourceAccountId,
+                destinationAccountId,
+                amount,
+                currency,
+                postedAt
+        );
+    }
+
+    public TransferNotification(
+            UUID id,
+            UUID eventId,
+            UUID transferRequestId,
+            UUID actorUserId,
+            UUID journalId,
+            UUID sourceAccountId,
+            UUID destinationAccountId,
+            BigDecimal amount,
+            String currency,
+            Instant postedAt
+    ) {
         this.id =
                 Objects.requireNonNull(id);
 
@@ -99,6 +128,13 @@ public class TransferNotification {
                 Objects.requireNonNull(
                         transferRequestId
                 );
+
+        /*
+         * Null is deliberately allowed for historical
+         * TRANSFER_POSTED version-1 events.
+         */
+        this.actorUserId =
+                actorUserId;
 
         this.journalId =
                 Objects.requireNonNull(
@@ -160,6 +196,10 @@ public class TransferNotification {
 
     public UUID getTransferRequestId() {
         return transferRequestId;
+    }
+
+    public UUID getActorUserId() {
+        return actorUserId;
     }
 
     public UUID getJournalId() {

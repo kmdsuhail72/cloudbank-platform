@@ -1,9 +1,7 @@
 package com.cloudbank.notification.transfer;
 
 import org.springframework.jdbc.core.JdbcTemplate;
-
 import org.springframework.stereotype.Service;
-
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.jackson.databind.ObjectMapper;
@@ -28,8 +26,11 @@ public class TransferNotificationProcessingService {
     private static final String AGGREGATE_TYPE =
             "TRANSFER";
 
-    private static final int EVENT_VERSION =
+    private static final int LEGACY_EVENT_VERSION =
             1;
+
+    private static final int CURRENT_EVENT_VERSION =
+            2;
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -112,6 +113,7 @@ public class TransferNotificationProcessingService {
                         UUID.randomUUID(),
                         event.eventId(),
                         data.requestId(),
+                        data.actorUserId(),
                         data.journalId(),
                         data.sourceAccountId(),
                         data.destinationAccountId(),
@@ -188,8 +190,11 @@ public class TransferNotificationProcessingService {
             );
         }
 
-        if (event.eventVersion()
-                != EVENT_VERSION) {
+        int eventVersion =
+                event.eventVersion();
+
+        if (eventVersion != LEGACY_EVENT_VERSION
+                && eventVersion != CURRENT_EVENT_VERSION) {
             throw new IllegalArgumentException(
                     "Unsupported event version"
             );
@@ -224,6 +229,13 @@ public class TransferNotificationProcessingService {
         )) {
             throw new IllegalArgumentException(
                     "Aggregate ID must match request ID"
+            );
+        }
+
+        if (eventVersion == CURRENT_EVENT_VERSION) {
+            Objects.requireNonNull(
+                    data.actorUserId(),
+                    "Actor user ID is required for version 2"
             );
         }
 
