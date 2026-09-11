@@ -190,6 +190,161 @@ class EmailDeliveryClaimServiceIntegrationTest {
         )).isEqualTo(1);
     }
 
+    @Test
+    void shouldRecoverExpiredProcessingLease() {
+        Instant claimTime =
+                Instant.parse(
+                        "2026-09-11T14:00:00Z"
+                );
+
+        DeliveryFixture fixture =
+                insertPendingDelivery(
+                        claimTime.minusSeconds(60)
+                );
+
+        EmailDeliveryClaim claim =
+                claimService.claimNext(
+                        claimTime,
+                        Duration.ofSeconds(30)
+                ).orElseThrow();
+
+        int recovered =
+                claimService.recoverExpiredLeases(
+                        claimTime.plusSeconds(31)
+                );
+
+        assertThat(recovered)
+                .isEqualTo(1);
+
+        assertThat(statusOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                "PENDING"
+        );
+
+        assertThat(claimTokenOf(
+                fixture.deliveryId()
+        )).isNull();
+
+        assertThat(leaseUntilOf(
+                fixture.deliveryId()
+        )).isNull();
+
+        assertThat(nextAttemptAtOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                claimTime.plusSeconds(31)
+        );
+
+        assertThat(attemptCountOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                claim.attemptCount()
+        );
+    }
+
+    @Test
+    void shouldNotRecoverUnexpiredProcessingLease() {
+        Instant claimTime =
+                Instant.parse(
+                        "2026-09-11T14:00:00Z"
+                );
+
+        DeliveryFixture fixture =
+                insertPendingDelivery(
+                        claimTime.minusSeconds(60)
+                );
+
+        EmailDeliveryClaim claim =
+                claimService.claimNext(
+                        claimTime,
+                        Duration.ofSeconds(30)
+                ).orElseThrow();
+
+        int recovered =
+                claimService.recoverExpiredLeases(
+                        claimTime.plusSeconds(29)
+                );
+
+        assertThat(recovered)
+                .isZero();
+
+        assertThat(statusOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                "PROCESSING"
+        );
+
+        assertThat(claimTokenOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                claim.claimToken()
+        );
+
+        assertThat(leaseUntilOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                claim.leaseUntil()
+        );
+
+        assertThat(attemptCountOf(
+                fixture.deliveryId()
+        )).isEqualTo(1);
+    }
+
+    @Test
+    void shouldReclaimRecoveredDeliveryWithNewClaimToken() {
+        Instant firstClaimTime =
+                Instant.parse(
+                        "2026-09-11T14:00:00Z"
+                );
+
+        DeliveryFixture fixture =
+                insertPendingDelivery(
+                        firstClaimTime.minusSeconds(60)
+                );
+
+        EmailDeliveryClaim firstClaim =
+                claimService.claimNext(
+                        firstClaimTime,
+                        Duration.ofSeconds(30)
+                ).orElseThrow();
+
+        Instant recoveryTime =
+                firstClaimTime.plusSeconds(31);
+
+        assertThat(
+                claimService.recoverExpiredLeases(
+                        recoveryTime
+                )
+        ).isEqualTo(1);
+
+        EmailDeliveryClaim secondClaim =
+                claimService.claimNext(
+                        recoveryTime,
+                        Duration.ofSeconds(30)
+                ).orElseThrow();
+
+        assertThat(secondClaim.deliveryId())
+                .isEqualTo(
+                        fixture.deliveryId()
+                );
+
+        assertThat(secondClaim.claimToken())
+                .isNotEqualTo(
+                        firstClaim.claimToken()
+                );
+
+        assertThat(secondClaim.attemptCount())
+                .isEqualTo(2);
+
+        assertThat(statusOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                "PROCESSING"
+        );
+    }
+
     private DeliveryFixture insertPendingDelivery(
             Instant nextAttemptAt
     ) {
@@ -337,6 +492,58 @@ class EmailDeliveryClaimServiceIntegrationTest {
                 String.class,
                 deliveryId
         );
+    }
+
+    private UUID claimTokenOf(
+            UUID deliveryId
+    ) {
+        return jdbcTemplate.queryForObject(
+                """
+                SELECT claim_token
+                FROM email_deliveries
+                WHERE id = ?
+                """,
+                UUID.class,
+                deliveryId
+        );
+    }
+
+    private Instant leaseUntilOf(
+            UUID deliveryId
+    ) {
+        Timestamp value =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT lease_until
+                        FROM email_deliveries
+                        WHERE id = ?
+                        """,
+                        Timestamp.class,
+                        deliveryId
+                );
+
+        return value == null
+                ? null
+                : value.toInstant();
+    }
+
+    private Instant nextAttemptAtOf(
+            UUID deliveryId
+    ) {
+        Timestamp value =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT next_attempt_at
+                        FROM email_deliveries
+                        WHERE id = ?
+                        """,
+                        Timestamp.class,
+                        deliveryId
+                );
+
+        return value == null
+                ? null
+                : value.toInstant();
     }
 
     private int attemptCountOf(

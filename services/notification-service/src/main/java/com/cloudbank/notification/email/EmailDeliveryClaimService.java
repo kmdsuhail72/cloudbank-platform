@@ -30,6 +30,39 @@ public class EmailDeliveryClaimService {
     }
 
     @Transactional
+    public int recoverExpiredLeases(
+            Instant now
+    ) {
+        Objects.requireNonNull(
+                now,
+                "Recovery time is required"
+        );
+
+        return jdbcTemplate.update(
+                """
+                UPDATE email_deliveries
+                SET
+                    status = 'PENDING',
+                    claim_token = NULL,
+                    lease_until = NULL,
+                    next_attempt_at = ?,
+                    updated_at = ?
+                WHERE status = 'PROCESSING'
+                  AND lease_until <= ?
+                """,
+                Timestamp.from(
+                        now
+                ),
+                Timestamp.from(
+                        now
+                ),
+                Timestamp.from(
+                        now
+                )
+        );
+    }
+
+    @Transactional
     public Optional<EmailDeliveryClaim> claimNext() {
         return claimNext(
                 Instant.now(),
