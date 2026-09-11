@@ -1,5 +1,7 @@
 package com.cloudbank.notification.transfer;
 
+import com.cloudbank.notification.email.EmailDelivery;
+import com.cloudbank.notification.email.EmailDeliveryRepository;
 import com.cloudbank.notification.inbox.InboxEvent;
 import com.cloudbank.notification.inbox.InboxEventRepository;
 
@@ -33,14 +35,19 @@ class TransferNotificationProcessingServiceIntegrationTest {
     @Autowired
     private TransferNotificationRepository notificationRepository;
 
+    @Autowired
+    private EmailDeliveryRepository emailDeliveryRepository;
+
     @BeforeEach
     void setUp() {
+        emailDeliveryRepository.deleteAllInBatch();
         notificationRepository.deleteAllInBatch();
         inboxRepository.deleteAllInBatch();
     }
 
     @AfterEach
     void tearDown() {
+        emailDeliveryRepository.deleteAllInBatch();
         notificationRepository.deleteAllInBatch();
         inboxRepository.deleteAllInBatch();
     }
@@ -96,6 +103,11 @@ class TransferNotificationProcessingServiceIntegrationTest {
                         .getFirst()
                         .getActorUserId()
         );
+
+        assertEquals(
+                0,
+                emailDeliveryRepository.count()
+        );
     }
 
     @Test
@@ -127,12 +139,103 @@ class TransferNotificationProcessingServiceIntegrationTest {
                 notificationRepository.count()
         );
 
-        assertEquals(
-                actorUserId,
+        TransferNotification notification =
                 notificationRepository
                         .findAll()
-                        .getFirst()
-                        .getActorUserId()
+                        .getFirst();
+
+        assertEquals(
+                actorUserId,
+                notification.getActorUserId()
+        );
+
+        assertEquals(
+                1,
+                emailDeliveryRepository.count()
+        );
+
+        EmailDelivery delivery =
+                emailDeliveryRepository
+                        .findAll()
+                        .getFirst();
+
+        assertEquals(
+                notification.getId(),
+                delivery.getNotificationId()
+        );
+
+        assertEquals(
+                actorUserId,
+                delivery.getRecipientUserId()
+        );
+
+        assertEquals(
+                EmailDelivery.Status.PENDING,
+                delivery.getStatus()
+        );
+
+        assertEquals(
+                0,
+                delivery.getAttemptCount()
+        );
+
+        assertNotNull(
+                delivery.getNextAttemptAt()
+        );
+
+        assertNull(
+                delivery.getClaimToken()
+        );
+
+        assertNull(
+                delivery.getLeaseUntil()
+        );
+
+        assertNull(
+                delivery.getSentAt()
+        );
+    }
+
+    @Test
+    void shouldProcessDuplicateVersionTwoEventWithoutDuplicateDelivery() {
+        UUID actorUserId =
+                UUID.randomUUID();
+
+        Fixture fixture =
+                fixture(
+                        2,
+                        actorUserId
+                );
+
+        assertEquals(
+                TransferNotificationProcessingService
+                        .ProcessingOutcome.PROCESSED,
+                processingService.process(
+                        fixture.message()
+                )
+        );
+
+        assertEquals(
+                TransferNotificationProcessingService
+                        .ProcessingOutcome.DUPLICATE,
+                processingService.process(
+                        fixture.message()
+                )
+        );
+
+        assertEquals(
+                1,
+                inboxRepository.count()
+        );
+
+        assertEquals(
+                1,
+                notificationRepository.count()
+        );
+
+        assertEquals(
+                1,
+                emailDeliveryRepository.count()
         );
     }
 
@@ -159,6 +262,11 @@ class TransferNotificationProcessingServiceIntegrationTest {
         assertEquals(
                 0,
                 notificationRepository.count()
+        );
+
+        assertEquals(
+                0,
+                emailDeliveryRepository.count()
         );
     }
 
@@ -192,6 +300,11 @@ class TransferNotificationProcessingServiceIntegrationTest {
         assertEquals(
                 0,
                 notificationRepository.count()
+        );
+
+        assertEquals(
+                0,
+                emailDeliveryRepository.count()
         );
     }
 

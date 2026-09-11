@@ -1,5 +1,8 @@
 package com.cloudbank.notification.transfer;
 
+import com.cloudbank.notification.email.EmailDelivery;
+import com.cloudbank.notification.email.EmailDeliveryRepository;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,11 +40,15 @@ public class TransferNotificationProcessingService {
     private final TransferNotificationRepository
             notificationRepository;
 
+    private final EmailDeliveryRepository
+            emailDeliveryRepository;
+
     private final ObjectMapper objectMapper;
 
     public TransferNotificationProcessingService(
             JdbcTemplate jdbcTemplate,
             TransferNotificationRepository notificationRepository,
+            EmailDeliveryRepository emailDeliveryRepository,
             ObjectMapper objectMapper
     ) {
         this.jdbcTemplate =
@@ -52,6 +59,11 @@ public class TransferNotificationProcessingService {
         this.notificationRepository =
                 Objects.requireNonNull(
                         notificationRepository
+                );
+
+        this.emailDeliveryRepository =
+                Objects.requireNonNull(
+                        emailDeliveryRepository
                 );
 
         this.objectMapper =
@@ -108,20 +120,39 @@ public class TransferNotificationProcessingService {
         TransferPostedData data =
                 event.data();
 
-        notificationRepository.saveAndFlush(
-                new TransferNotification(
-                        UUID.randomUUID(),
-                        event.eventId(),
-                        data.requestId(),
-                        data.actorUserId(),
-                        data.journalId(),
-                        data.sourceAccountId(),
-                        data.destinationAccountId(),
-                        data.amount(),
-                        data.currency(),
-                        data.postedAt()
-                )
-        );
+        TransferNotification notification =
+                notificationRepository.saveAndFlush(
+                        new TransferNotification(
+                                UUID.randomUUID(),
+                                event.eventId(),
+                                data.requestId(),
+                                data.actorUserId(),
+                                data.journalId(),
+                                data.sourceAccountId(),
+                                data.destinationAccountId(),
+                                data.amount(),
+                                data.currency(),
+                                data.postedAt()
+                        )
+                );
+
+        /*
+         * Historical TRANSFER_POSTED v1 events do not carry a
+         * trustworthy actor identity, so they remain readable
+         * without creating an email delivery intent.
+         */
+        if (event.eventVersion()
+                == CURRENT_EVENT_VERSION) {
+
+            emailDeliveryRepository.saveAndFlush(
+                    new EmailDelivery(
+                            UUID.randomUUID(),
+                            notification.getId(),
+                            data.actorUserId(),
+                            Instant.now()
+                    )
+            );
+        }
 
         int processed =
                 jdbcTemplate.update(
