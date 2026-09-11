@@ -21,9 +21,13 @@ public class EmailDeliveryWorkerScheduler {
     private final EmailDeliveryWorkerService
             workerService;
 
+    private final EmailDeliveryMetrics
+            metrics;
+
     public EmailDeliveryWorkerScheduler(
             EmailDeliveryClaimService claimService,
-            EmailDeliveryWorkerService workerService
+            EmailDeliveryWorkerService workerService,
+            EmailDeliveryMetrics metrics
     ) {
         this.claimService =
                 Objects.requireNonNull(
@@ -34,6 +38,11 @@ public class EmailDeliveryWorkerScheduler {
                 Objects.requireNonNull(
                         workerService
                 );
+
+        this.metrics =
+                Objects.requireNonNull(
+                        metrics
+                );
     }
 
     @Scheduled(
@@ -41,10 +50,20 @@ public class EmailDeliveryWorkerScheduler {
                     "${cloudbank.email.worker.poll-delay-ms:1000}"
     )
     public void poll() {
-        claimService.recoverExpiredLeases(
-                Instant.now()
+        int recovered =
+                claimService.recoverExpiredLeases(
+                        Instant.now()
+                );
+
+        metrics.recordRecoveredLeases(
+                recovered
         );
 
-        workerService.processNext();
+        EmailDeliveryWorkerService.ProcessingOutcome outcome =
+                workerService.processNext();
+
+        metrics.recordOutcome(
+                outcome
+        );
     }
 }
