@@ -1,0 +1,10 @@
+apiVersion: 1
+
+datasources:
+  - name: CloudBank Prometheus
+    uid: cloudbank-prometheus
+    type: prometheus
+    access: proxy
+    url: ${CLOUDBANK_PROMETHEUS_URL}
+    isDefault: true
+    editable: false

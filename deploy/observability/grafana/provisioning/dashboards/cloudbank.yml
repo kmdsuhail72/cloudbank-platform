@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: CloudBank
+    orgId: 1
+    folder: CloudBank
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    updateIntervalSeconds: 10
+
+    options:
+      path: ${CLOUDBANK_GRAFANA_DASHBOARDS_PATH}
