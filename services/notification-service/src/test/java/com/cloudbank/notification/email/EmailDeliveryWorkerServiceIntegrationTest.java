@@ -24,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         properties = {
                 "cloudbank.kafka.consumer.enabled=false",
                 "cloudbank.kafka.contact-consumer.enabled=false",
-                "cloudbank.email.worker.enabled=true"
+                "cloudbank.email.worker.enabled=true",
+                "cloudbank.email.worker.max-attempts=5"
         }
 )
 class EmailDeliveryWorkerServiceIntegrationTest {
@@ -250,6 +251,108 @@ class EmailDeliveryWorkerServiceIntegrationTest {
         assertThat(sentAtOf(
                 fixture.deliveryId()
         )).isNull();
+    }
+
+    @Test
+    void shouldFailTerminallyAtConfiguredMaxAttempt() {
+        Instant now =
+                Instant.parse(
+                        "2026-09-11T15:00:00Z"
+                );
+
+        Fixture fixture =
+                insertFixture(
+                        now.minusSeconds(5),
+                        true
+                );
+
+        int updated =
+                jdbcTemplate.update(
+                        """
+                        UPDATE email_deliveries
+                        SET attempt_count = 4
+                        WHERE id = ?
+                        """,
+                        fixture.deliveryId()
+                );
+
+        assertThat(updated)
+                .isEqualTo(1);
+
+        transport.failure =
+                new IllegalStateException(
+                        "mail endpoint permanently unavailable"
+                );
+
+        EmailDeliveryWorkerService.ProcessingOutcome result =
+                workerService.processNext(
+                        now
+                );
+
+        assertThat(result)
+                .isEqualTo(
+                        EmailDeliveryWorkerService
+                                .ProcessingOutcome.FAILED
+                );
+
+        assertThat(transport.messages)
+                .hasSize(1);
+
+        assertThat(
+                transport.transactionActiveDuringSend
+        ).containsExactly(
+                false
+        );
+
+        assertThat(statusOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                "FAILED"
+        );
+
+        assertThat(attemptCountOf(
+                fixture.deliveryId()
+        )).isEqualTo(5);
+
+        assertThat(claimTokenOf(
+                fixture.deliveryId()
+        )).isNull();
+
+        assertThat(leaseUntilOf(
+                fixture.deliveryId()
+        )).isNull();
+
+        assertThat(sentAtOf(
+                fixture.deliveryId()
+        )).isNull();
+
+        assertThat(nextAttemptAtOf(
+                fixture.deliveryId()
+        )).isEqualTo(
+                now
+        );
+
+        assertThat(lastErrorOf(
+                fixture.deliveryId()
+        )).contains(
+                "IllegalStateException"
+        ).contains(
+                "mail endpoint permanently unavailable"
+        );
+
+        EmailDeliveryWorkerService.ProcessingOutcome secondResult =
+                workerService.processNext(
+                        now.plusSeconds(3600)
+                );
+
+        assertThat(secondResult)
+                .isEqualTo(
+                        EmailDeliveryWorkerService
+                                .ProcessingOutcome.NO_WORK
+                );
+
+        assertThat(transport.messages)
+                .hasSize(1);
     }
 
     @Test

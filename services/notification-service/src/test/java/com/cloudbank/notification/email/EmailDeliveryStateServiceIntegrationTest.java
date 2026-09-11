@@ -256,6 +256,126 @@ class EmailDeliveryStateServiceIntegrationTest {
     }
 
     @Test
+    void shouldMarkFailedOnlyWithCurrentClaimToken() {
+        Instant now =
+                Instant.parse(
+                        "2026-09-11T15:00:00Z"
+                );
+
+        DeliveryFixture fixture =
+                insertPendingDelivery(
+                        now.minusSeconds(10)
+                );
+
+        EmailDeliveryClaim claim =
+                claimService.claimNext(
+                        now,
+                        Duration.ofSeconds(30)
+                ).orElseThrow();
+
+        Instant failedAt =
+                now.plusSeconds(5);
+
+        boolean updated =
+                stateService.markFailed(
+                        fixture.deliveryId(),
+                        claim.claimToken(),
+                        failedAt,
+                        "SMTP permanently unavailable"
+                );
+
+        assertThat(updated)
+                .isTrue();
+
+        DeliveryState state =
+                loadState(
+                        fixture.deliveryId()
+                );
+
+        assertThat(state.status())
+                .isEqualTo("FAILED");
+
+        assertThat(state.attemptCount())
+                .isEqualTo(1);
+
+        assertThat(state.claimToken())
+                .isNull();
+
+        assertThat(state.leaseUntil())
+                .isNull();
+
+        assertThat(state.sentAt())
+                .isNull();
+
+        assertThat(state.nextAttemptAt())
+                .isEqualTo(failedAt);
+
+        assertThat(state.lastError())
+                .isEqualTo(
+                        "SMTP permanently unavailable"
+                );
+
+        assertThat(
+                claimService.claimNext(
+                        failedAt.plusSeconds(300),
+                        Duration.ofSeconds(30)
+                )
+        ).isEmpty();
+    }
+
+    @Test
+    void shouldRejectMarkFailedWithStaleClaimToken() {
+        Instant now =
+                Instant.parse(
+                        "2026-09-11T15:00:00Z"
+                );
+
+        DeliveryFixture fixture =
+                insertPendingDelivery(
+                        now.minusSeconds(10)
+                );
+
+        EmailDeliveryClaim claim =
+                claimService.claimNext(
+                        now,
+                        Duration.ofSeconds(30)
+                ).orElseThrow();
+
+        boolean updated =
+                stateService.markFailed(
+                        fixture.deliveryId(),
+                        UUID.randomUUID(),
+                        now.plusSeconds(5),
+                        "stale worker failure"
+                );
+
+        assertThat(updated)
+                .isFalse();
+
+        DeliveryState state =
+                loadState(
+                        fixture.deliveryId()
+                );
+
+        assertThat(state.status())
+                .isEqualTo("PROCESSING");
+
+        assertThat(state.claimToken())
+                .isEqualTo(
+                        claim.claimToken()
+                );
+
+        assertThat(state.leaseUntil())
+                .isNotNull();
+
+        assertThat(state.sentAt())
+                .isNull();
+
+        assertThat(state.lastError())
+                .isNull();
+    }
+
+    @Test
     void staleWorkerCannotFinalizeAfterLeaseRecoveryAndReclaim() {
         Instant firstClaimTime =
                 Instant.parse(

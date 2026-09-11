@@ -142,4 +142,63 @@ public class EmailDeliveryStateService {
 
         return updated == 1;
     }
+    @Transactional
+    public boolean markFailed(
+            UUID deliveryId,
+            UUID claimToken,
+            Instant failedAt,
+            String error
+    ) {
+        Objects.requireNonNull(
+                deliveryId,
+                "Delivery ID is required"
+        );
+
+        Objects.requireNonNull(
+                claimToken,
+                "Claim token is required"
+        );
+
+        Objects.requireNonNull(
+                failedAt,
+                "Failure time is required"
+        );
+
+        if (error == null
+                || error.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Failure error is required"
+            );
+        }
+
+        int updated =
+                jdbcTemplate.update(
+                        """
+                        UPDATE email_deliveries
+                        SET
+                            status = 'FAILED',
+                            claim_token = NULL,
+                            lease_until = NULL,
+                            next_attempt_at = ?,
+                            last_error = ?,
+                            sent_at = NULL,
+                            updated_at = ?
+                        WHERE id = ?
+                          AND status = 'PROCESSING'
+                          AND claim_token = ?
+                        """,
+                        Timestamp.from(
+                                failedAt
+                        ),
+                        error,
+                        Timestamp.from(
+                                failedAt
+                        ),
+                        deliveryId,
+                        claimToken
+                );
+
+        return updated == 1;
+    }
+
 }

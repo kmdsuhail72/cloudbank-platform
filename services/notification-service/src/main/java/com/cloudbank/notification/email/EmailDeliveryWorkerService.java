@@ -5,6 +5,7 @@ import com.cloudbank.notification.contact.RecipientContactRepository;
 import com.cloudbank.notification.transfer.TransferNotification;
 import com.cloudbank.notification.transfer.TransferNotificationRepository;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ public class EmailDeliveryWorkerService {
         NO_WORK,
         SENT,
         RETRY_SCHEDULED,
+        FAILED,
         LOST_CLAIM
     }
 
@@ -48,13 +50,17 @@ public class EmailDeliveryWorkerService {
     private final EmailDeliveryTransport
             transport;
 
+    private final int maxAttempts;
+
     public EmailDeliveryWorkerService(
             EmailDeliveryClaimService claimService,
             EmailDeliveryStateService stateService,
             EmailDeliveryRetryPolicy retryPolicy,
             RecipientContactRepository contactRepository,
             TransferNotificationRepository notificationRepository,
-            EmailDeliveryTransport transport
+            EmailDeliveryTransport transport,
+            @Value("${cloudbank.email.worker.max-attempts:5}")
+            int maxAttempts
     ) {
         this.claimService =
                 Objects.requireNonNull(
@@ -85,6 +91,15 @@ public class EmailDeliveryWorkerService {
                 Objects.requireNonNull(
                         transport
                 );
+
+        if (maxAttempts <= 0) {
+            throw new IllegalArgumentException(
+                    "Max email delivery attempts must be positive"
+            );
+        }
+
+        this.maxAttempts =
+                maxAttempts;
     }
 
     /*
@@ -94,8 +109,8 @@ public class EmailDeliveryWorkerService {
      * The transport call therefore occurs after the claim transaction
      * has completed.
      *
-     * markSent()/releaseForRetry() each open their own short
-     * fenced transaction afterward.
+     * markSent()/releaseForRetry()/markFailed() each open their own
+     * short fenced transaction afterward.
      */
     public ProcessingOutcome processNext() {
         return processNext(
@@ -139,7 +154,7 @@ public class EmailDeliveryWorkerService {
                 );
 
         if (contact.isEmpty()) {
-            return releaseForRetry(
+            return handleFailure(
                     claim,
                     now,
                     "Recipient contact not available"
@@ -158,7 +173,7 @@ public class EmailDeliveryWorkerService {
                     message
             );
         } catch (RuntimeException exception) {
-            return releaseForRetry(
+            return handleFailure(
                     claim,
                     now,
                     describeFailure(
@@ -179,11 +194,25 @@ public class EmailDeliveryWorkerService {
                 : ProcessingOutcome.LOST_CLAIM;
     }
 
-    private ProcessingOutcome releaseForRetry(
+    private ProcessingOutcome handleFailure(
             EmailDeliveryClaim claim,
             Instant now,
             String error
     ) {
+        if (claim.attemptCount() >= maxAttempts) {
+            boolean failed =
+                    stateService.markFailed(
+                            claim.deliveryId(),
+                            claim.claimToken(),
+                            now,
+                            error
+                    );
+
+            return failed
+                    ? ProcessingOutcome.FAILED
+                    : ProcessingOutcome.LOST_CLAIM;
+        }
+
         Instant nextAttemptAt =
                 retryPolicy.nextAttemptAt(
                         now,
