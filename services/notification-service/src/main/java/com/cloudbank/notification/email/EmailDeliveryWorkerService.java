@@ -1,0 +1,269 @@
+package com.cloudbank.notification.email;
+
+import com.cloudbank.notification.contact.RecipientContact;
+import com.cloudbank.notification.contact.RecipientContactRepository;
+import com.cloudbank.notification.transfer.TransferNotification;
+import com.cloudbank.notification.transfer.TransferNotificationRepository;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.Objects;
+import java.util.Optional;
+
+@Service
+@ConditionalOnProperty(
+        prefix = "cloudbank.email.worker",
+        name = "enabled",
+        havingValue = "true"
+)
+public class EmailDeliveryWorkerService {
+
+    public enum ProcessingOutcome {
+        NO_WORK,
+        SENT,
+        RETRY_SCHEDULED,
+        LOST_CLAIM
+    }
+
+    private static final int MAX_ERROR_LENGTH =
+            2000;
+
+    private final EmailDeliveryClaimService
+            claimService;
+
+    private final EmailDeliveryStateService
+            stateService;
+
+    private final EmailDeliveryRetryPolicy
+            retryPolicy;
+
+    private final RecipientContactRepository
+            contactRepository;
+
+    private final TransferNotificationRepository
+            notificationRepository;
+
+    private final EmailDeliveryTransport
+            transport;
+
+    public EmailDeliveryWorkerService(
+            EmailDeliveryClaimService claimService,
+            EmailDeliveryStateService stateService,
+            EmailDeliveryRetryPolicy retryPolicy,
+            RecipientContactRepository contactRepository,
+            TransferNotificationRepository notificationRepository,
+            EmailDeliveryTransport transport
+    ) {
+        this.claimService =
+                Objects.requireNonNull(
+                        claimService
+                );
+
+        this.stateService =
+                Objects.requireNonNull(
+                        stateService
+                );
+
+        this.retryPolicy =
+                Objects.requireNonNull(
+                        retryPolicy
+                );
+
+        this.contactRepository =
+                Objects.requireNonNull(
+                        contactRepository
+                );
+
+        this.notificationRepository =
+                Objects.requireNonNull(
+                        notificationRepository
+                );
+
+        this.transport =
+                Objects.requireNonNull(
+                        transport
+                );
+    }
+
+    /*
+     * Intentionally NOT transactional.
+     *
+     * claimNext() opens and commits its own short transaction.
+     * The transport call therefore occurs after the claim transaction
+     * has completed.
+     *
+     * markSent()/releaseForRetry() each open their own short
+     * fenced transaction afterward.
+     */
+    public ProcessingOutcome processNext() {
+        return processNext(
+                Instant.now()
+        );
+    }
+
+    ProcessingOutcome processNext(
+            Instant now
+    ) {
+        Objects.requireNonNull(
+                now,
+                "Worker time is required"
+        );
+
+        Optional<EmailDeliveryClaim> optionalClaim =
+                claimService.claimNext(
+                        now,
+                        EmailDeliveryClaimService.DEFAULT_LEASE_DURATION
+                );
+
+        if (optionalClaim.isEmpty()) {
+            return ProcessingOutcome.NO_WORK;
+        }
+
+        EmailDeliveryClaim claim =
+                optionalClaim.orElseThrow();
+
+        TransferNotification notification =
+                notificationRepository.findById(
+                        claim.notificationId()
+                ).orElseThrow(
+                        () -> new IllegalStateException(
+                                "Transfer notification not found"
+                        )
+                );
+
+        Optional<RecipientContact> contact =
+                contactRepository.findById(
+                        claim.recipientUserId()
+                );
+
+        if (contact.isEmpty()) {
+            return releaseForRetry(
+                    claim,
+                    now,
+                    "Recipient contact not available"
+            );
+        }
+
+        EmailDeliveryMessage message =
+                toMessage(
+                        claim,
+                        notification,
+                        contact.orElseThrow()
+                );
+
+        try {
+            transport.send(
+                    message
+            );
+        } catch (RuntimeException exception) {
+            return releaseForRetry(
+                    claim,
+                    now,
+                    describeFailure(
+                            exception
+                    )
+            );
+        }
+
+        boolean markedSent =
+                stateService.markSent(
+                        claim.deliveryId(),
+                        claim.claimToken(),
+                        Instant.now()
+                );
+
+        return markedSent
+                ? ProcessingOutcome.SENT
+                : ProcessingOutcome.LOST_CLAIM;
+    }
+
+    private ProcessingOutcome releaseForRetry(
+            EmailDeliveryClaim claim,
+            Instant now,
+            String error
+    ) {
+        Instant nextAttemptAt =
+                retryPolicy.nextAttemptAt(
+                        now,
+                        claim.attemptCount()
+                );
+
+        boolean released =
+                stateService.releaseForRetry(
+                        claim.deliveryId(),
+                        claim.claimToken(),
+                        now,
+                        nextAttemptAt,
+                        error
+                );
+
+        return released
+                ? ProcessingOutcome.RETRY_SCHEDULED
+                : ProcessingOutcome.LOST_CLAIM;
+    }
+
+    private static EmailDeliveryMessage toMessage(
+            EmailDeliveryClaim claim,
+            TransferNotification notification,
+            RecipientContact contact
+    ) {
+        if (!notification.getId()
+                .equals(claim.notificationId())) {
+            throw new IllegalStateException(
+                    "Claim notification mismatch"
+            );
+        }
+
+        if (!contact.getUserId()
+                .equals(claim.recipientUserId())) {
+            throw new IllegalStateException(
+                    "Claim recipient mismatch"
+            );
+        }
+
+        return new EmailDeliveryMessage(
+                claim.deliveryId(),
+                claim.notificationId(),
+                claim.recipientUserId(),
+                contact.getEmail(),
+                notification.getTransferRequestId(),
+                notification.getJournalId(),
+                notification.getSourceAccountId(),
+                notification.getDestinationAccountId(),
+                notification.getAmount(),
+                notification.getCurrency(),
+                notification.getPostedAt()
+        );
+    }
+
+    private static String describeFailure(
+            RuntimeException exception
+    ) {
+        String message =
+                exception.getMessage();
+
+        String value =
+                exception.getClass()
+                        .getSimpleName();
+
+        if (message != null
+                && !message.isBlank()) {
+            value =
+                    value
+                            + ": "
+                            + message;
+        }
+
+        if (value.length()
+                > MAX_ERROR_LENGTH) {
+            return value.substring(
+                    0,
+                    MAX_ERROR_LENGTH
+            );
+        }
+
+        return value;
+    }
+}
