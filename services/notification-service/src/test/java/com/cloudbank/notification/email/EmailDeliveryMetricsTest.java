@@ -155,6 +155,54 @@ class EmailDeliveryMetricsTest {
     }
 
     @Test
+    void shouldExposeActionableDeliveryAges() {
+        SimpleMeterRegistry registry =
+                new SimpleMeterRegistry();
+
+        JdbcTemplate jdbcTemplate =
+                mock(
+                        JdbcTemplate.class
+                );
+
+        when(
+                jdbcTemplate.queryForObject(
+                        anyString(),
+                        eq(Double.class)
+                )
+        ).thenReturn(
+                45.0,
+                12.0
+        );
+
+        new EmailDeliveryMetrics(
+                registry,
+                jdbcTemplate
+        );
+
+        assertThat(
+                registry.get(
+                                EmailDeliveryMetrics
+                                        .PENDING_OLDEST_DUE_SECONDS
+                        )
+                        .gauge()
+                        .value()
+        ).isEqualTo(
+                45.0
+        );
+
+        assertThat(
+                registry.get(
+                                EmailDeliveryMetrics
+                                        .PROCESSING_OLDEST_EXPIRED_LEASE_SECONDS
+                        )
+                        .gauge()
+                        .value()
+        ).isEqualTo(
+                12.0
+        );
+    }
+
+    @Test
     void shouldRejectNegativeRecoveredLeaseCount() {
         EmailDeliveryMetrics metrics =
                 new EmailDeliveryMetrics(

@@ -5,6 +5,9 @@ import com.cloudbank.notification.contact.RecipientContactRepository;
 import com.cloudbank.notification.transfer.TransferNotification;
 import com.cloudbank.notification.transfer.TransferNotificationRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,11 @@ import java.util.Optional;
         havingValue = "true"
 )
 public class EmailDeliveryWorkerService {
+
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(
+                    EmailDeliveryWorkerService.class
+            );
 
     public enum ProcessingOutcome {
         NO_WORK,
@@ -154,6 +162,12 @@ public class EmailDeliveryWorkerService {
                 );
 
         if (contact.isEmpty()) {
+            LOGGER.warn(
+                    "email_delivery_recipient_contact_missing deliveryId={} attempt={}",
+                    claim.deliveryId(),
+                    claim.attemptCount()
+            );
+
             return handleFailure(
                     claim,
                     now,
@@ -173,6 +187,14 @@ public class EmailDeliveryWorkerService {
                     message
             );
         } catch (RuntimeException exception) {
+            LOGGER.warn(
+                    "email_delivery_transport_failure deliveryId={} attempt={} exceptionType={}",
+                    claim.deliveryId(),
+                    claim.attemptCount(),
+                    exception.getClass()
+                            .getSimpleName()
+            );
+
             return handleFailure(
                     claim,
                     now,
@@ -188,6 +210,14 @@ public class EmailDeliveryWorkerService {
                         claim.claimToken(),
                         Instant.now()
                 );
+
+        if (!markedSent) {
+            LOGGER.warn(
+                    "email_delivery_sent_lost_claim deliveryId={} attempt={}",
+                    claim.deliveryId(),
+                    claim.attemptCount()
+            );
+        }
 
         return markedSent
                 ? ProcessingOutcome.SENT
@@ -207,6 +237,20 @@ public class EmailDeliveryWorkerService {
                             now,
                             error
                     );
+
+            if (failed) {
+                LOGGER.error(
+                        "email_delivery_terminal_failed deliveryId={} attempt={}",
+                        claim.deliveryId(),
+                        claim.attemptCount()
+                );
+            } else {
+                LOGGER.warn(
+                        "email_delivery_terminal_failure_lost_claim deliveryId={} attempt={}",
+                        claim.deliveryId(),
+                        claim.attemptCount()
+                );
+            }
 
             return failed
                     ? ProcessingOutcome.FAILED

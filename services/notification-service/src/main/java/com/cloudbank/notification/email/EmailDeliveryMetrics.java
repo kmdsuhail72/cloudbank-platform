@@ -25,6 +25,12 @@ public class EmailDeliveryMetrics {
     static final String DELIVERY_STATES =
             "cloudbank.email.deliveries";
 
+    static final String PENDING_OLDEST_DUE_SECONDS =
+            "cloudbank.email.pending.oldest.due.seconds";
+
+    static final String PROCESSING_OLDEST_EXPIRED_LEASE_SECONDS =
+            "cloudbank.email.processing.oldest.expired.lease.seconds";
+
     private static final List<String> DELIVERY_STATUSES =
             List.of(
                     "PENDING",
@@ -121,6 +127,32 @@ public class EmailDeliveryMetrics {
                             meterRegistry
                     );
         }
+
+        Gauge.builder(
+                        PENDING_OLDEST_DUE_SECONDS,
+                        this,
+                        ignored ->
+                                oldestPendingDueSeconds()
+                )
+                .description(
+                        "Age in seconds of the oldest due pending email delivery"
+                )
+                .register(
+                        meterRegistry
+                );
+
+        Gauge.builder(
+                        PROCESSING_OLDEST_EXPIRED_LEASE_SECONDS,
+                        this,
+                        ignored ->
+                                oldestExpiredProcessingLeaseSeconds()
+                )
+                .description(
+                        "Age in seconds of the oldest expired processing lease"
+                )
+                .register(
+                        meterRegistry
+                );
     }
 
     public void recordOutcome(
@@ -169,5 +201,63 @@ public class EmailDeliveryMetrics {
         return count == null
                 ? 0.0
                 : count.doubleValue();
+    }
+
+    private double oldestPendingDueSeconds() {
+        Double age =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT COALESCE(
+                            EXTRACT(
+                                EPOCH FROM (
+                                    CURRENT_TIMESTAMP
+                                    - MIN(next_attempt_at)
+                                )
+                            ),
+                            0
+                        )::double precision
+                        FROM email_deliveries
+                        WHERE status = 'PENDING'
+                          AND next_attempt_at
+                              <= CURRENT_TIMESTAMP
+                        """,
+                        Double.class
+                );
+
+        return age == null
+                ? 0.0
+                : Math.max(
+                        age,
+                        0.0
+                );
+    }
+
+    private double oldestExpiredProcessingLeaseSeconds() {
+        Double age =
+                jdbcTemplate.queryForObject(
+                        """
+                        SELECT COALESCE(
+                            EXTRACT(
+                                EPOCH FROM (
+                                    CURRENT_TIMESTAMP
+                                    - MIN(lease_until)
+                                )
+                            ),
+                            0
+                        )::double precision
+                        FROM email_deliveries
+                        WHERE status = 'PROCESSING'
+                          AND lease_until
+                              < CURRENT_TIMESTAMP
+                        """,
+                        Double.class
+                );
+
+        return age == null
+                ? 0.0
+                : Math.max(
+                        age,
+                        0.0
+                );
     }
 }

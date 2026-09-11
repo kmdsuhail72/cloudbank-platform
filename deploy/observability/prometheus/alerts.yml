@@ -1,0 +1,42 @@
+groups:
+  - name: cloudbank-email-delivery
+    rules:
+      - alert: CloudBankEmailDeliveryTerminalFailure
+        expr: cloudbank_email_deliveries{application="notification-service",status="FAILED"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: notification-service
+        annotations:
+          summary: "CloudBank email delivery reached terminal failure"
+          description: "At least one durable email delivery is in FAILED state and requires operator review."
+
+      - alert: CloudBankEmailPendingBacklogStale
+        expr: cloudbank_email_pending_oldest_due_seconds{application="notification-service"} > 120
+        for: 5m
+        labels:
+          severity: warning
+          service: notification-service
+        annotations:
+          summary: "CloudBank email delivery backlog is stale"
+          description: "The oldest due PENDING email has remained actionable for more than two minutes."
+
+      - alert: CloudBankEmailProcessingLeaseStale
+        expr: cloudbank_email_processing_oldest_expired_lease_seconds{application="notification-service"} > 30
+        for: 2m
+        labels:
+          severity: critical
+          service: notification-service
+        annotations:
+          summary: "CloudBank email delivery lease recovery is unhealthy"
+          description: "A PROCESSING email delivery has retained an expired lease for more than thirty seconds."
+
+      - alert: CloudBankEmailLostClaim
+        expr: increase(cloudbank_email_worker_outcomes_total{application="notification-service",outcome="lost_claim"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: notification-service
+        annotations:
+          summary: "CloudBank email worker lost a fenced claim"
+          description: "At least one worker finalization lost ownership of its delivery claim during the last five minutes."
