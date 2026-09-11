@@ -272,6 +272,21 @@ public class EmailDeliveryWorkerService {
                         error
                 );
 
+        if (released) {
+            LOGGER.info(
+                    "email_delivery_retry_scheduled deliveryId={} attempt={} nextAttemptAt={}",
+                    claim.deliveryId(),
+                    claim.attemptCount(),
+                    nextAttemptAt
+            );
+        } else {
+            LOGGER.warn(
+                    "email_delivery_retry_lost_claim deliveryId={} attempt={}",
+                    claim.deliveryId(),
+                    claim.attemptCount()
+            );
+        }
+
         return released
                 ? ProcessingOutcome.RETRY_SCHEDULED
                 : ProcessingOutcome.LOST_CLAIM;
