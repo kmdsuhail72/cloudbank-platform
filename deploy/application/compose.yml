@@ -76,6 +76,7 @@ services:
       CLOUDBANK_LEDGER_DB_PORT: "5432"
       CLOUDBANK_ACCOUNT_SERVICE_URL: http://account-service:8084
       CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
+      CLOUDBANK_OUTBOX_PUBLISHER_ENABLED: "true"
     depends_on:
       account-service:
         condition: service_healthy
