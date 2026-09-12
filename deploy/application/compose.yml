@@ -29,6 +29,11 @@ services:
     <<: *service-defaults
     image: cloudbank/customer-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-customer-service
+    volumes:
+      - type: bind
+        source: ../../services/auth-service/keys/jwt-public.pem
+        target: /auth-service/keys/jwt-public.pem
+        read_only: true
     ports:
       - "127.0.0.1:8083:8083"
     environment:
