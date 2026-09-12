@@ -1,0 +1,103 @@
+name: cloudbank-application
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  env_file:
+    - ../../.env.local
+  networks:
+    - cloudbank-messaging
+
+services:
+
+  auth-service:
+    <<: *service-defaults
+    image: cloudbank/auth-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-auth-service
+    ports:
+      - "127.0.0.1:8081:8081"
+    environment:
+      CLOUDBANK_DB_HOST: cloudbank-postgres
+      CLOUDBANK_DB_PORT: "5432"
+      CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
+
+  customer-service:
+    <<: *service-defaults
+    image: cloudbank/customer-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-customer-service
+    ports:
+      - "127.0.0.1:8083:8083"
+    environment:
+      CLOUDBANK_CUSTOMER_DB_HOST: cloudbank-postgres
+      CLOUDBANK_CUSTOMER_DB_PORT: "5432"
+
+  account-service:
+    <<: *service-defaults
+    image: cloudbank/account-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-account-service
+    ports:
+      - "127.0.0.1:8084:8084"
+    environment:
+      CLOUDBANK_ACCOUNT_DB_HOST: cloudbank-postgres
+      CLOUDBANK_ACCOUNT_DB_PORT: "5432"
+      CLOUDBANK_CUSTOMER_SERVICE_URL: http://customer-service:8083
+    depends_on:
+      customer-service:
+        condition: service_healthy
+
+  ledger-service:
+    <<: *service-defaults
+    image: cloudbank/ledger-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-ledger-service
+    ports:
+      - "127.0.0.1:8085:8085"
+    environment:
+      CLOUDBANK_LEDGER_DB_HOST: cloudbank-postgres
+      CLOUDBANK_LEDGER_DB_PORT: "5432"
+      CLOUDBANK_ACCOUNT_SERVICE_URL: http://account-service:8084
+      CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
+    depends_on:
+      account-service:
+        condition: service_healthy
+
+  notification-service:
+    <<: *service-defaults
+    image: cloudbank/notification-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-notification-service
+    ports:
+      - "127.0.0.1:8086:8086"
+    environment:
+      CLOUDBANK_NOTIFICATION_DB_HOST: cloudbank-postgres
+      CLOUDBANK_NOTIFICATION_DB_PORT: "5432"
+      CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
+      CLOUDBANK_EMAIL_SMTP_HOST: cloudbank-mailpit
+      CLOUDBANK_EMAIL_SMTP_PORT: "1025"
+      CLOUDBANK_NOTIFICATION_CONSUMER_ENABLED: "true"
+      CLOUDBANK_NOTIFICATION_CONTACT_CONSUMER_ENABLED: "true"
+      CLOUDBANK_EMAIL_WORKER_ENABLED: "true"
+      CLOUDBANK_EMAIL_SMTP_ENABLED: "true"
+
+  api-gateway:
+    <<: *service-defaults
+    image: cloudbank/api-gateway:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-api-gateway
+    ports:
+      - "127.0.0.1:8082:8082"
+    environment:
+      CLOUDBANK_AUTH_SERVICE_URL: http://auth-service:8081
+      CLOUDBANK_CUSTOMER_SERVICE_URL: http://customer-service:8083
+      CLOUDBANK_ACCOUNT_SERVICE_URL: http://account-service:8084
+      CLOUDBANK_LEDGER_SERVICE_URL: http://ledger-service:8085
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      customer-service:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+      ledger-service:
+        condition: service_healthy
+
+networks:
+  cloudbank-messaging:
+    external: true
+    name: cloudbank-messaging
