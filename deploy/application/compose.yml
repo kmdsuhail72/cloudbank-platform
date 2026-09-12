@@ -13,6 +13,11 @@ services:
     <<: *service-defaults
     image: cloudbank/auth-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-auth-service
+    volumes:
+      - type: bind
+        source: ../../services/auth-service/keys
+        target: /app/keys
+        read_only: true
     ports:
       - "127.0.0.1:8081:8081"
     environment:
