@@ -63,6 +63,11 @@ services:
     <<: *service-defaults
     image: cloudbank/ledger-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-ledger-service
+    volumes:
+      - type: bind
+        source: ../../services/auth-service/keys/jwt-public.pem
+        target: /auth-service/keys/jwt-public.pem
+        read_only: true
     ports:
       - "127.0.0.1:8085:8085"
     environment:
