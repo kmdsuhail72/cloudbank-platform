@@ -37,8 +37,6 @@ cleanup_on_failure() {
     exit "$rc"
 }
 
-trap cleanup_on_failure EXIT
-
 for port in 19090 3000; do
     if ss -ltnp |
        grep -q ":$port "
@@ -138,6 +136,8 @@ mkdir -p \
     "$BASE/grafana-data" \
     "$BASE/grafana-logs" \
     "$BASE/grafana-plugins"
+
+trap cleanup_on_failure EXIT
 
 nohup \
     "$PROM_EXE" \
