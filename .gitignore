@@ -32,7 +32,6 @@ Thumbs.db
 *.tfstate
 *.tfstate.*
 *.tfplan
-.terraform.lock.hcl
 
 # Kubernetes secrets
 *-secret.yaml
@@ -46,3 +45,12 @@ temp/
 *.pem
 *.key
 keys/
+*.tfvars
+*.tfvars.json
+.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

@@ -1,0 +1,9 @@
+aws_region        = "ap-south-1"
+state_bucket_name = "cloudbank-tfstate-494768964999-ap-south-1"
+
+tags = {
+  Project     = "CloudBank"
+  ManagedBy   = "Terraform"
+  Component   = "TerraformState"
+  Environment = "shared"
+}
