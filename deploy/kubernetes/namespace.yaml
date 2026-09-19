@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cloudbank
+  labels:
+    app.kubernetes.io/name: cloudbank
+    app.kubernetes.io/part-of: cloudbank-platform

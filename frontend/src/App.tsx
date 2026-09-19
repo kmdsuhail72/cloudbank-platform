@@ -37,6 +37,47 @@ const money = (amount: number, currency: string) =>
     currency,
   }).format(amount);
 
+function Logo() {
+  return (
+    <div className="logo" aria-label="CloudBank logo">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path
+          d="M6 13.25 16 7l10 6.25v2.2H6v-2.2Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8.5 17.5h15M10 17.5v7m4-7v7m4-7v7m4-7v7M7 26h18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function StatIcon({ type }: { type: "accounts" | "profile" | "active" }) {
+  return (
+    <span className={`stat-icon ${type}`} aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        {type === "accounts" && (
+          <path d="M4 10.5 12 5l8 5.5M6 11v7m4-7v7m4-7v7m4-7v7M4 19h16" />
+        )}
+        {type === "profile" && (
+          <path d="M12 3.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM4.5 20a7.5 7.5 0 0 1 15 0" />
+        )}
+        {type === "active" && (
+          <path d="m5 12 4.2 4.2L19 6.5" />
+        )}
+      </svg>
+    </span>
+  );
+}
+
 function Protected({ children }: { children: ReactNode }) {
   return authenticated()
     ? children
@@ -49,7 +90,7 @@ function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="shell">
       <aside>
-        <div className="logo">CB</div>
+        <Logo />
         <h1>CloudBank</h1>
         <nav>
           <NavLink to="/dashboard">Dashboard</NavLink>
@@ -109,28 +150,61 @@ function Login() {
 
   return (
     <div className="auth">
-      <form className="card" onSubmit={submit}>
-        <div className="logo">CB</div>
-        <h1>CloudBank</h1>
-        <p>Sign in to your digital bank.</p>
-        <input
-          type="email"
-          placeholder="Email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        {error && <div className="error">{error}</div>}
-        <button>Sign in</button>
-        <Link to="/register">Create login</Link>
-      </form>
+      <div className="auth-card">
+        <div className="auth-side">
+          <div className="auth-side-top">
+            <Logo />
+            <span>CloudBank</span>
+          </div>
+          <div>
+            <p className="eyebrow">Your money, simplified</p>
+            <h1>Banking that moves with you.</h1>
+            <p className="auth-side-copy">
+              One secure place to manage your accounts, track your spending,
+              and move money with confidence.
+            </p>
+          </div>
+          <div className="auth-side-note">
+            <span className="status-dot" />
+            Secure access, wherever you are
+          </div>
+        </div>
+        <form className="auth-form" onSubmit={submit}>
+          <div className="auth-heading">
+            <p className="eyebrow">Welcome back</p>
+            <h2>Sign in to CloudBank</h2>
+            <p>Enter your details to continue to your account.</p>
+          </div>
+          <label htmlFor="login-email">Email address</label>
+          <input
+            id="login-email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <div className="field-heading">
+            <label htmlFor="login-password">Password</label>
+            <span>Protected by encryption</span>
+          </div>
+          <input
+            id="login-password"
+            type="password"
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && <div className="error">{error}</div>}
+          <button className="auth-submit">Sign in <span>→</span></button>
+          <p className="auth-switch">
+            New to CloudBank? <Link to="/register">Create an account</Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }
@@ -138,6 +212,10 @@ function Login() {
 function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -147,7 +225,14 @@ function Register() {
     setError("");
 
     try {
-      const result = await api.register(email, password);
+      const result = await api.register(
+        email,
+        password,
+        firstName,
+        lastName,
+        phoneNumber,
+        dateOfBirth,
+      );
       setMessage(result.message);
       setPassword("");
     } catch (failure) {
@@ -161,30 +246,110 @@ function Register() {
 
   return (
     <div className="auth">
-      <form className="card" onSubmit={submit}>
-        <div className="logo">CB</div>
-        <h1>Create login</h1>
-        <input
-          type="email"
-          required
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          required
-          minLength={8}
-          maxLength={72}
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        {message && <div className="success">{message}</div>}
-        {error && <div className="error">{error}</div>}
-        <button>Register</button>
-        <Link to="/login">Back to sign in</Link>
-      </form>
+      <div className="auth-card">
+        <div className="auth-side auth-side-register">
+          <div className="auth-side-top">
+            <Logo />
+            <span>CloudBank</span>
+          </div>
+          <div>
+            <p className="eyebrow">Start today</p>
+            <h1>Your smarter financial future starts here.</h1>
+            <p className="auth-side-copy">
+              Set up your secure account in seconds and get a clearer view of
+              your everyday finances.
+            </p>
+          </div>
+          <div className="auth-side-note">
+            <span className="status-dot" />
+            Simple, secure, built for you
+          </div>
+        </div>
+        <form className="auth-form" onSubmit={submit}>
+          <div className="auth-heading">
+            <p className="eyebrow">Get started</p>
+            <h2>Create your account</h2>
+            <p>Join CloudBank and take control of your money.</p>
+          </div>
+          <div className="register-fields">
+            <div>
+              <label htmlFor="register-first-name">First name</label>
+              <input
+                id="register-first-name"
+                required
+                placeholder="First name"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="register-last-name">Last name</label>
+              <input
+                id="register-last-name"
+                required
+                placeholder="Last name"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
+          </div>
+          <label htmlFor="register-email">Email address</label>
+          <input
+            id="register-email"
+            type="email"
+            required
+            placeholder="you@example.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <label htmlFor="register-password">Create a password</label>
+          <input
+            id="register-password"
+            type="password"
+            required
+            minLength={8}
+            maxLength={72}
+            placeholder="At least 8 characters"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <div className="register-fields">
+            <div>
+              <label htmlFor="register-phone">Phone number</label>
+              <input
+                id="register-phone"
+                type="tel"
+                required
+                maxLength={32}
+                placeholder="+1 555 000 0000"
+                autoComplete="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="register-dob">Date of birth</label>
+              <input
+                id="register-dob"
+                type="date"
+                required
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+              />
+            </div>
+          </div>
+          {message && <div className="success">{message}</div>}
+          {error && <div className="error">{error}</div>}
+          <button className="auth-submit">Create account <span>→</span></button>
+          <p className="auth-switch">
+            Already have an account? <Link to="/login">Sign in</Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }
@@ -243,11 +408,21 @@ function Dashboard() {
 
   return (
     <>
-      <h2>
-        {profile?.firstName
-          ? `Welcome, ${profile.firstName}`
-          : "CloudBank Dashboard"}
-      </h2>
+      <div className="dashboard-hero">
+        <div>
+          <span className="eyebrow">Overview</span>
+          <h2>
+            {profile?.firstName
+              ? `Good morning, ${profile.firstName}`
+              : "Welcome to CloudBank"}
+          </h2>
+          <p>Here is your financial snapshot for today.</p>
+        </div>
+        <div className="dashboard-hero-actions">
+          <div className="header-chip"><i className="status-dot" /> Secure banking</div>
+          <Link className="hero-action" to="/accounts">View accounts <span>→</span></Link>
+        </div>
+      </div>
 
       {error && <div className="error">{error}</div>}
 
@@ -260,40 +435,77 @@ function Dashboard() {
 
       <div className="stats">
         <article>
-          <span>Accounts</span>
+          <div className="stat-top"><span>Accounts</span><StatIcon type="accounts" /></div>
           <strong>{accounts.length}</strong>
+          <small>Across your portfolio</small>
         </article>
         <article>
-          <span>Profile</span>
-          <strong>{profile?.status ?? "INCOMPLETE"}</strong>
+          <div className="stat-top"><span>Profile status</span><StatIcon type="profile" /></div>
+          <strong className="stat-value-text">{profile?.status ?? "INCOMPLETE"}</strong>
+          <small>Verification status</small>
         </article>
         <article>
-          <span>Active</span>
+          <div className="stat-top"><span>Active accounts</span><StatIcon type="active" /></div>
           <strong>
             {accounts.filter((a) => a.status === "ACTIVE").length}
           </strong>
+          <small>Ready to transact</small>
         </article>
       </div>
 
-      <section className="panel grid">
-        {accounts.map((account) => (
-          <Link
-            className="account"
-            key={account.id}
-            to={`/accounts/${account.id}`}
-          >
-            <strong>{account.accountNumber}</strong>
-            <span>{account.accountType} · {account.currency}</span>
-            <b>
-              {balances[account.id]
-                ? money(
-                    balances[account.id].postedBalance,
-                    balances[account.id].currency,
-                  )
-                : "Balance unavailable"}
-            </b>
-          </Link>
-        ))}
+      <section className="panel spotlight">
+        <div className="spotlight-copy">
+          <span className="eyebrow">Financial health</span>
+          <h3>Everything is in good standing.</h3>
+          <p>Your accounts and transfers are protected by CloudBank security.</p>
+        </div>
+        <div className="legend">
+          <span><i className="dot green" /> Active accounts</span>
+          <span><i className="dot blue" /> Protected transfers</span>
+        </div>
+      </section>
+
+      <section className="accounts-section">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Your portfolio</span>
+            <h3>Your accounts</h3>
+          </div>
+          <Link to="/accounts">Manage accounts <span>→</span></Link>
+        </div>
+        <div className="panel account-grid">
+          {accounts.length === 0 ? (
+            <div className="empty-accounts">
+              <span className="empty-icon">+</span>
+              <strong>No accounts yet</strong>
+              <span>Open your first account to get started.</span>
+              <Link to="/accounts">Open an account</Link>
+            </div>
+          ) : accounts.map((account) => (
+            <Link
+              className="account"
+              key={account.id}
+              to={`/accounts/${account.id}`}
+            >
+              <div className="account-meta">
+                <span className="account-label">{account.accountType}</span>
+                <strong>{account.accountNumber}</strong>
+              </div>
+              <span className="account-currency">{account.currency} account</span>
+              <b>
+                {balances[account.id]
+                  ? money(
+                      balances[account.id].postedBalance,
+                      balances[account.id].currency,
+                    )
+                  : "Balance unavailable"}
+              </b>
+              <em className={`status-badge ${account.status.toLowerCase()}`}>
+                {account.status}
+              </em>
+            </Link>
+          ))}
+        </div>
       </section>
     </>
   );
@@ -438,56 +650,85 @@ function Accounts() {
 
   return (
     <>
-      <h2>Accounts</h2>
-
-      <form className="panel form" onSubmit={submit}>
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as AccountType)}
-        >
-          <option value="CHECKING">Checking</option>
-          <option value="SAVINGS">Savings</option>
-        </select>
-
-        <input
-          required
-          maxLength={3}
-          pattern="[A-Za-z]{3}"
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value)}
-        />
-
-        <button>Open account</button>
-      </form>
+      <div className="page-header account-page-header">
+        <div>
+          <span className="eyebrow">Money management</span>
+          <h2>Your accounts</h2>
+          <p>Manage your CloudBank accounts in one place.</p>
+        </div>
+        <span className="header-chip">{items.length} account{items.length === 1 ? "" : "s"}</span>
+      </div>
 
       {error && <div className="error">{error}</div>}
 
-      <section className="panel">
-        <table>
-          <thead>
-            <tr>
-              <th>Account</th>
-              <th>Type</th>
-              <th>Currency</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.accountNumber}</td>
-                <td>{item.accountType}</td>
-                <td>{item.currency}</td>
-                <td>{item.status}</td>
-                <td>
-                  <Link to={`/accounts/${item.id}`}>View</Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      <div className="accounts-layout">
+        <section className="panel open-account-card">
+          <div className="open-account-heading">
+            <span className="account-create-icon">+</span>
+            <div>
+              <span className="eyebrow">New account</span>
+              <h3>Open an account</h3>
+              <p>Choose an account type and currency to get started.</p>
+            </div>
+          </div>
+          <form className="form" onSubmit={submit}>
+            <label htmlFor="account-type">Account type</label>
+            <select
+              id="account-type"
+              value={type}
+              onChange={(e) => setType(e.target.value as AccountType)}
+            >
+              <option value="CHECKING">Checking</option>
+              <option value="SAVINGS">Savings</option>
+            </select>
+            <label htmlFor="account-currency">Currency</label>
+            <input
+              id="account-currency"
+              required
+              maxLength={3}
+              pattern="[A-Za-z]{3}"
+              placeholder="USD"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            />
+            <button>Open account <span>→</span></button>
+          </form>
+        </section>
+
+        <section className="accounts-list-panel">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Portfolio</span>
+              <h3>All accounts</h3>
+            </div>
+          </div>
+          {items.length === 0 ? (
+            <div className="panel empty-accounts">
+              <span className="empty-icon">+</span>
+              <strong>No accounts yet</strong>
+              <span>Your new account will appear here.</span>
+            </div>
+          ) : (
+            <div className="account-list">
+              {items.map((item) => (
+                <Link className="account-row" key={item.id} to={`/accounts/${item.id}`}>
+                  <span className="account-row-icon">
+                    {item.accountType === "SAVINGS" ? "S" : "C"}
+                  </span>
+                  <span className="account-row-main">
+                    <strong>{item.accountType} account</strong>
+                    <small>{item.accountNumber} · {item.currency}</small>
+                  </span>
+                  <em className={`status-badge ${item.status.toLowerCase()}`}>
+                    {item.status}
+                  </em>
+                  <span className="account-row-arrow">→</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </>
   );
 }

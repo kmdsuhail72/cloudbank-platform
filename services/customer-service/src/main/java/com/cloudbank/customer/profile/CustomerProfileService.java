@@ -4,6 +4,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -15,11 +16,50 @@ public class CustomerProfileService {
             "uk_customer_profiles_auth_user";
 
     private final CustomerProfileRepository repository;
+    private final ObjectMapper objectMapper;
 
     public CustomerProfileService(
-            CustomerProfileRepository repository
+            CustomerProfileRepository repository,
+            ObjectMapper objectMapper
     ) {
         this.repository = repository;
+        this.objectMapper = objectMapper;
+    }
+
+    @Transactional
+    public void createFromRegistrationEvent(String rawMessage) {
+        final UserContactEventEnvelope event;
+        try {
+            event = objectMapper.readValue(
+                    rawMessage,
+                    UserContactEventEnvelope.class
+            );
+        } catch (Exception exception) {
+            throw new IllegalArgumentException(
+                    "Invalid user registration event",
+                    exception
+            );
+        }
+
+        if (!"USER_CONTACT_REGISTERED".equals(event.eventType())
+                || event.eventVersion() != 1
+                || event.data() == null
+                || event.data().userId() == null
+                || !event.data().userId().equals(event.aggregateId())) {
+            throw new IllegalArgumentException(
+                    "Unsupported user registration event"
+            );
+        }
+
+        if (repository.findByAuthUserId(event.data().userId()).isEmpty()) {
+            saveProfile(new CustomerProfile(
+                    event.data().userId(),
+                    event.data().firstName(),
+                    event.data().lastName(),
+                    event.data().phoneNumber(),
+                    event.data().dateOfBirth()
+            ));
+        }
     }
 
     @Transactional(readOnly = true)

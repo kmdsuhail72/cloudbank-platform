@@ -40,6 +40,8 @@ services:
     environment:
       CLOUDBANK_CUSTOMER_DB_HOST: cloudbank-postgres
       CLOUDBANK_CUSTOMER_DB_PORT: "5432"
+      CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
+      CLOUDBANK_CUSTOMER_CONSUMER_ENABLED: "true"
 
   account-service:
     <<: *service-defaults
@@ -97,6 +99,23 @@ services:
       CLOUDBANK_NOTIFICATION_CONTACT_CONSUMER_ENABLED: "true"
       CLOUDBANK_EMAIL_WORKER_ENABLED: "true"
       CLOUDBANK_EMAIL_SMTP_ENABLED: "true"
+
+  audit-fraud-service:
+    <<: *service-defaults
+    image: cloudbank/audit-fraud-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-audit-fraud-service
+    ports:
+      - "127.0.0.1:8087:8087"
+    environment:
+      CLOUDBANK_AUDIT_DB_HOST: cloudbank-postgres
+      CLOUDBANK_AUDIT_DB_PORT: "5432"
+      CLOUDBANK_AUDIT_DB_NAME: cloudbank_audit
+      CLOUDBANK_AUDIT_DB_USER: cloudbank_audit
+      CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
+      CLOUDBANK_AUDIT_CONSUMER_ENABLED: "true"
+    depends_on:
+      notification-service:
+        condition: service_started
 
   api-gateway:
     <<: *service-defaults

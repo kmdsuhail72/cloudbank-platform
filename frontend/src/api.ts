@@ -83,12 +83,26 @@ export const api = {
     );
   },
 
-  register(email: string, password: string) {
+  register(
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    phoneNumber: string,
+    dateOfBirth: string,
+  ) {
     return request<RegisterResponse>(
       "/api/v1/auth/register",
       {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          lastName,
+          phoneNumber,
+          dateOfBirth,
+        }),
       },
       false,
     );

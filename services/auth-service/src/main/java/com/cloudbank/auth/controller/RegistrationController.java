@@ -29,10 +29,24 @@ public class RegistrationController {
     public ResponseEntity<Map<String, String>> register(
             @Valid @RequestBody RegisterRequest request
     ) {
-        registrationService.register(
-                request.email(),
-                request.password()
-        );
+        if (request.firstName() == null
+                && request.lastName() == null
+                && request.phoneNumber() == null
+                && request.dateOfBirth() == null) {
+            registrationService.register(
+                    request.email(),
+                    request.password()
+            );
+        } else {
+            registrationService.register(
+                    request.email(),
+                    request.password(),
+                    request.firstName(),
+                    request.lastName(),
+                    request.phoneNumber(),
+                    request.dateOfBirth()
+            );
+        }
 
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)

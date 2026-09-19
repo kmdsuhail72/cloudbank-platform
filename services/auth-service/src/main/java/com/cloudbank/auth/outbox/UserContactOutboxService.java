@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Objects;
+import java.time.LocalDate;
 
 @Service
 public class UserContactOutboxService {
@@ -42,6 +43,22 @@ public class UserContactOutboxService {
     public AuthOutboxEvent recordRegistered(
             AuthUser authUser
     ) {
+        return recordRegistered(
+                authUser,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    public AuthOutboxEvent recordRegistered(
+            AuthUser authUser,
+            String firstName,
+            String lastName,
+            String phoneNumber,
+            LocalDate dateOfBirth
+    ) {
         Objects.requireNonNull(
                 authUser,
                 "Auth user is required"
@@ -60,7 +77,11 @@ public class UserContactOutboxService {
                     objectMapper.writeValueAsString(
                             new UserContactRegisteredData(
                                     authUser.getId(),
-                                    authUser.getEmail()
+                                    authUser.getEmail(),
+                                    firstName,
+                                    lastName,
+                                    phoneNumber,
+                                    dateOfBirth
                             )
                     );
         } catch (Exception exception) {

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.time.LocalDate;
 
 @Service
 public class RegistrationService {
@@ -56,6 +57,25 @@ public class RegistrationService {
             String email,
             String rawPassword
     ) {
+        return register(
+                email,
+                rawPassword,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    @Transactional
+    public AuthUser register(
+            String email,
+            String rawPassword,
+            String firstName,
+            String lastName,
+            String phoneNumber,
+            LocalDate dateOfBirth
+    ) {
         String normalizedEmail =
                 normalizeEmail(email);
 
@@ -83,10 +103,20 @@ public class RegistrationService {
              *
              * Both writes remain inside this transaction.
              */
-            userContactOutboxService
-                    .recordRegistered(
-                            persisted
-                    );
+            if (firstName == null
+                    && lastName == null
+                    && phoneNumber == null
+                    && dateOfBirth == null) {
+                userContactOutboxService.recordRegistered(persisted);
+            } else {
+                userContactOutboxService.recordRegistered(
+                        persisted,
+                        firstName,
+                        lastName,
+                        phoneNumber,
+                        dateOfBirth
+                );
+            }
 
             return persisted;
 

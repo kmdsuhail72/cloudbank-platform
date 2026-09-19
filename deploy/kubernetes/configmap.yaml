@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudbank-config
+  namespace: cloudbank
+data:
+  CLOUDBANK_DB_HOST: "postgres.cloudbank.svc.cluster.local"
+  CLOUDBANK_DB_PORT: "5432"
+  CLOUDBANK_DB_NAME: "cloudbank_core"
+  CLOUDBANK_AUTH_SERVICE_URL: "http://auth-service:8081"
+  CLOUDBANK_CUSTOMER_SERVICE_URL: "http://customer-service:8083"
+  CLOUDBANK_ACCOUNT_SERVICE_URL: "http://account-service:8084"
+  CLOUDBANK_LEDGER_SERVICE_URL: "http://ledger-service:8085"
+  CLOUDBANK_JWT_ISSUER: "https://auth.cloudbank.test"
+  CLOUDBANK_JWT_AUDIENCE: "cloudbank-api"
+  CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  CLOUDBANK_USER_CONTACT_TOPIC: "cloudbank.user-contact.v1"
+  SPRING_PROFILES_ACTIVE: "kubernetes"

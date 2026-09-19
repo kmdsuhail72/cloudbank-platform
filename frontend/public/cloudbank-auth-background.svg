@@ -1,0 +1,46 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1600" y2="1000" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102B5B"/>
+      <stop offset="0.52" stop-color="#1B4E95"/>
+      <stop offset="1" stop-color="#6D9FEA"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="300" y1="100" x2="1250" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B9D5FF" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFE8A3"/>
+      <stop offset="1" stop-color="#F5B94C"/>
+    </linearGradient>
+    <filter id="blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="32"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <circle cx="1350" cy="120" r="260" fill="#9FC6FF" fill-opacity="0.24" filter="url(#blur)"/>
+  <circle cx="180" cy="850" r="280" fill="#071D47" fill-opacity="0.4" filter="url(#blur)"/>
+  <path d="M-80 720C230 420 410 900 720 570C1010 262 1110 770 1680 170" stroke="#D9E9FF" stroke-opacity="0.18" stroke-width="3"/>
+  <path d="M-100 785C210 485 425 945 760 635C1040 375 1170 820 1700 245" stroke="#D9E9FF" stroke-opacity="0.12" stroke-width="2"/>
+  <path d="M40 140C360 270 530 0 850 130C1080 225 1250 80 1570 170" stroke="#D9E9FF" stroke-opacity="0.18" stroke-width="2"/>
+  <g opacity="0.78">
+    <rect x="1020" y="510" width="90" height="260" rx="8" fill="url(#glass)" stroke="#DCEBFF" stroke-opacity="0.35"/>
+    <rect x="1130" y="420" width="120" height="350" rx="8" fill="url(#glass)" stroke="#DCEBFF" stroke-opacity="0.35"/>
+    <rect x="1270" y="300" width="155" height="470" rx="8" fill="url(#glass)" stroke="#DCEBFF" stroke-opacity="0.35"/>
+    <path d="M980 790H1500" stroke="#ECF5FF" stroke-opacity="0.4" stroke-width="4"/>
+    <path d="M1050 570h30m-30 45h30m80-120h40m-40 55h40m100-115h55m-55 65h55m-55 65h55" stroke="#E8F3FF" stroke-opacity="0.35" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(230 250)">
+    <circle cx="170" cy="170" r="125" fill="#0A2860" fill-opacity="0.32"/>
+    <circle cx="170" cy="170" r="96" fill="#EAF4FF" fill-opacity="0.1" stroke="#EAF4FF" stroke-opacity="0.4" stroke-width="2"/>
+    <path d="m170 92 65 42v15H105v-15l65-42Z" fill="url(#gold)"/>
+    <path d="M120 170h100M125 157v59m30-59v59m30-59v59m30-59v59M108 235h124" stroke="#FFF2BE" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g fill="url(#gold)" opacity="0.8">
+    <circle cx="1430" cy="720" r="12"/>
+    <circle cx="1475" cy="680" r="7"/>
+    <circle cx="1505" cy="745" r="5"/>
+    <circle cx="930" cy="210" r="8"/>
+  </g>
+  <path d="M0 875C330 790 505 1010 850 870C1140 752 1300 850 1600 780V1000H0V875Z" fill="#081E4A" fill-opacity="0.28"/>
+</svg>
