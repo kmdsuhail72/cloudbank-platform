@@ -6,40 +6,40 @@ resources:
 images:
 - name: ghcr.io/cloudbank-platform/auth-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/auth-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/api-gateway
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/api-gateway
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/customer-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/customer-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/account-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/account-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/ledger-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/ledger-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/notification-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/notification-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/audit-fraud-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/audit-fraud-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/card-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/card-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/transaction-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/transaction-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/beneficiary-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/beneficiary-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/loan-service
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/loan-service
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 - name: ghcr.io/cloudbank-platform/frontend
   newName: ghcr.io/kmdsuhail72/cloudbank-platform/frontend
-  newTag: bootstrap-required
+  newTag: sha-615f1a2acccde6487848257498ede968ceaef731
 patches:
 - target:
     kind: Deployment
