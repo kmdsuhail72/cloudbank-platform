@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -35,7 +36,8 @@ class CustomerProfileServiceTest {
 
         service =
                 new CustomerProfileService(
-                        repository
+                        repository,
+                        JsonMapper.builder().build()
                 );
     }
 
