@@ -34,6 +34,7 @@ public class AuditEvent {
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt;
 
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
     private String payload;
 

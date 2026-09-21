@@ -24,10 +24,18 @@ import type {
   AccountResponse,
   AccountStatus,
   AccountType,
+  BeneficiaryResponse,
+  CardResponse,
+  CardStatus,
+  CardType,
   CustomerProfilePayload,
   CustomerProfileResponse,
   LedgerBalanceResult,
   LedgerTransactionPage,
+  LoanResponse,
+  LoanStatus,
+  TransactionResponse,
+  TransactionType,
   TransferResult,
 } from "./types";
 
@@ -96,6 +104,10 @@ function Shell({ children }: { children: ReactNode }) {
           <NavLink to="/dashboard">Dashboard</NavLink>
           <NavLink to="/accounts">Accounts</NavLink>
           <NavLink to="/transfer">Transfer</NavLink>
+          <NavLink to="/beneficiaries">Beneficiaries</NavLink>
+          <NavLink to="/cards">Cards</NavLink>
+          <NavLink to="/loans">Loans</NavLink>
+          <NavLink to="/activity">Activity</NavLink>
           <NavLink to="/profile">Profile</NavLink>
         </nav>
         <button
@@ -525,6 +537,8 @@ function Profile() {
     useState<CustomerProfilePayload>(empty);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     void api.profile()
@@ -541,6 +555,9 @@ function Profile() {
         if (!(failure instanceof ApiError && failure.status === 404)) {
           setError("Unable to load profile");
         }
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
@@ -559,53 +576,158 @@ function Profile() {
     setMessage("");
     setError("");
 
+    if (!form.firstName?.trim() || !form.lastName?.trim()) {
+      setError("Please enter your first and last name.");
+      return;
+    }
+
+    if (form.phoneNumber && !/^[+\d\s().-]{7,32}$/.test(form.phoneNumber)) {
+      setError("Please enter a valid phone number.");
+      return;
+    }
+
+    setSaving(true);
     try {
       const result = existing
         ? await api.updateProfile(form)
         : await api.createProfile(form);
 
       setExisting(result);
-      setMessage("Profile saved.");
+      setForm({
+        firstName: result.firstName,
+        lastName: result.lastName,
+        phoneNumber: result.phoneNumber,
+        dateOfBirth: result.dateOfBirth,
+      });
+      setMessage("Your profile details have been saved.");
     } catch (failure) {
       setError(
         failure instanceof Error
           ? failure.message
           : "Unable to save profile",
       );
+    } finally {
+      setSaving(false);
     }
   }
 
+  const displayName = [form.firstName, form.lastName]
+    .filter(Boolean)
+    .join(" ") || "Your profile";
+  const initials = [form.firstName, form.lastName]
+    .filter(Boolean)
+    .map((name) => name?.[0]?.toUpperCase())
+    .join("") || "?";
+
   return (
     <>
-      <h2>Customer profile</h2>
-      <form className="panel form" onSubmit={submit}>
-        <input
-          placeholder="First name"
-          maxLength={100}
-          value={form.firstName ?? ""}
-          onChange={(e) => update("firstName", e.target.value)}
-        />
-        <input
-          placeholder="Last name"
-          maxLength={100}
-          value={form.lastName ?? ""}
-          onChange={(e) => update("lastName", e.target.value)}
-        />
-        <input
-          placeholder="Phone"
-          maxLength={32}
-          value={form.phoneNumber ?? ""}
-          onChange={(e) => update("phoneNumber", e.target.value)}
-        />
-        <input
-          type="date"
-          value={form.dateOfBirth ?? ""}
-          onChange={(e) => update("dateOfBirth", e.target.value)}
-        />
-        {message && <div className="success">{message}</div>}
-        {error && <div className="error">{error}</div>}
-        <button>{existing ? "Update profile" : "Create profile"}</button>
-      </form>
+      <div className="page-heading profile-heading">
+        <div>
+          <p className="eyebrow">Account settings</p>
+          <h2>Customer profile</h2>
+          <p>Keep your personal details up to date for a smoother banking experience.</p>
+        </div>
+        {existing && (
+          <span className={`status-badge ${existing.status.toLowerCase()}`}>
+            <span className="status-dot-inline" />
+            {existing.status}
+          </span>
+        )}
+      </div>
+      <div className="profile-layout">
+        <section className="panel profile-summary">
+          <div className="profile-avatar">{initials}</div>
+          <h3>{displayName}</h3>
+          <p className="profile-summary-copy">
+            {existing ? "CloudBank customer" : "Complete your profile to get started"}
+          </p>
+          <div className="profile-summary-divider" />
+          <dl className="profile-meta">
+            <div>
+              <dt>Customer since</dt>
+              <dd>{existing ? new Date(existing.createdAt).toLocaleDateString(undefined, {
+                month: "short",
+                year: "numeric",
+              }) : "Not available"}</dd>
+            </div>
+            <div>
+              <dt>Last updated</dt>
+              <dd>{existing ? new Date(existing.updatedAt).toLocaleDateString() : "Not saved yet"}</dd>
+            </div>
+          </dl>
+          <p className="profile-security-note">
+            <span aria-hidden="true">✓</span>
+            Your personal information is encrypted and securely stored.
+          </p>
+        </section>
+        <form className="panel form profile-form" onSubmit={submit}>
+          <div className="form-section-heading">
+            <div>
+              <h3>Personal information</h3>
+              <p>Use your legal name and a phone number where we can reach you.</p>
+            </div>
+            {loading && <span className="form-loading">Loading…</span>}
+          </div>
+          <div className="profile-fields">
+            <label>
+              First name
+              <input
+                placeholder="e.g. Maya"
+                autoComplete="given-name"
+                maxLength={100}
+                value={form.firstName ?? ""}
+                onChange={(e) => update("firstName", e.target.value)}
+                disabled={loading || saving}
+                required
+              />
+            </label>
+            <label>
+              Last name
+              <input
+                placeholder="e.g. Johnson"
+                autoComplete="family-name"
+                maxLength={100}
+                value={form.lastName ?? ""}
+                onChange={(e) => update("lastName", e.target.value)}
+                disabled={loading || saving}
+                required
+              />
+            </label>
+            <label>
+              Phone number
+              <input
+                type="tel"
+                placeholder="+1 (555) 123-4567"
+                autoComplete="tel"
+                maxLength={32}
+                value={form.phoneNumber ?? ""}
+                onChange={(e) => update("phoneNumber", e.target.value)}
+                disabled={loading || saving}
+              />
+              <span className="field-hint">We’ll use this for important account alerts.</span>
+            </label>
+            <label>
+              Date of birth
+              <input
+                type="date"
+                autoComplete="bday"
+                max={new Date().toISOString().split("T")[0]}
+                value={form.dateOfBirth ?? ""}
+                onChange={(e) => update("dateOfBirth", e.target.value)}
+                disabled={loading || saving}
+              />
+            </label>
+          </div>
+          {message && <div className="success">{message}</div>}
+          {error && <div className="error">{error}</div>}
+          <div className="profile-form-actions">
+            <span>Changes are saved securely to your customer record.</span>
+            <button disabled={loading || saving}>
+              {saving ? "Saving…" : existing ? "Save changes" : "Create profile"}
+            </button>
+          </div>
+        </form>
+      </div>
     </>
   );
 }
@@ -999,6 +1121,201 @@ function Transactions() {
   );
 }
 
+function Cards() {
+  const [items, setItems] = useState<CardResponse[]>([]);
+  const [name, setName] = useState("");
+  const [type, setType] = useState<CardType>("DEBIT");
+  const [currency, setCurrency] = useState("USD");
+  const [error, setError] = useState("");
+
+  async function refresh() {
+    try {
+      setItems(await api.cards());
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Unable to load cards");
+    }
+  }
+
+  useEffect(() => { void refresh(); }, []);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    try {
+      await api.createCard(name, type, currency.toUpperCase());
+      setName("");
+      await refresh();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Unable to create card");
+    }
+  }
+
+  async function updateStatus(card: CardResponse, status: CardStatus) {
+    try {
+      const updated = await api.updateCardStatus(card.id, status);
+      setItems((current) => current.map((item) => item.id === updated.id ? updated : item));
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Unable to update card");
+    }
+  }
+
+  return (
+    <>
+      <div className="page-header account-page-header">
+        <div><span className="eyebrow">Payment tools</span><h2>Your cards</h2><p>Manage your CloudBank debit and credit cards.</p></div>
+        <span className="header-chip">{items.length} card{items.length === 1 ? "" : "s"}</span>
+      </div>
+      {error && <div className="error">{error}</div>}
+      <div className="accounts-layout">
+        <form className="panel form" onSubmit={submit}>
+          <span className="eyebrow">New card</span>
+          <h3>Issue a card</h3>
+          <label>Cardholder name</label>
+          <input required maxLength={120} value={name} onChange={(event) => setName(event.target.value)} placeholder="Name on card" />
+          <label>Card type</label>
+          <select value={type} onChange={(event) => setType(event.target.value as CardType)}>
+            <option value="DEBIT">Debit</option><option value="CREDIT">Credit</option>
+          </select>
+          <label>Currency</label>
+          <input required maxLength={3} pattern="[A-Za-z]{3}" value={currency} onChange={(event) => setCurrency(event.target.value)} />
+          <button>Issue card <span>→</span></button>
+        </form>
+        <section className="card-list">
+          {items.length === 0 ? <div className="panel empty-accounts"><strong>No cards yet</strong><span>Issue your first card to get started.</span></div> :
+            items.map((card) => (
+              <article className="payment-card" key={card.id}>
+                <div className="payment-card-top"><span>{card.type} CARD</span><strong>CloudBank</strong></div>
+                <div className="payment-card-number">{card.maskedNumber}</div>
+                <div className="payment-card-bottom"><span>{card.cardholderName}</span><span>{String(card.expirationMonth).padStart(2, "0")}/{card.expirationYear}</span></div>
+                <div className="actions"><em className={`status-badge ${card.status.toLowerCase()}`}>{card.status}</em>
+                  {card.status === "ACTIVE" && <button onClick={() => void updateStatus(card, "BLOCKED")}>Block card</button>}
+                  {card.status === "BLOCKED" && <button onClick={() => void updateStatus(card, "ACTIVE")}>Unblock card</button>}
+                </div>
+              </article>
+            ))}
+        </section>
+      </div>
+    </>
+  );
+}
+
+function Beneficiaries() {
+  const empty: Omit<BeneficiaryResponse, "id" | "authUserId" | "createdAt" | "updatedAt"> = {
+    nickname: "", accountHolderName: "", accountNumber: "", bankName: "", currency: "USD",
+  };
+  const [items, setItems] = useState<BeneficiaryResponse[]>([]);
+  const [form, setForm] = useState(empty);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const update = (key: keyof typeof empty, value: string) => setForm((current) => ({ ...current, [key]: value }));
+
+  async function refresh() {
+    try { setItems(await api.beneficiaries()); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to load beneficiaries"); }
+  }
+  useEffect(() => { void refresh(); }, []);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    try {
+      if (editing) await api.updateBeneficiary(editing, form);
+      else await api.createBeneficiary(form);
+      setForm(empty); setEditing(null); await refresh();
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to save beneficiary"); }
+  }
+
+  async function remove(id: string) {
+    if (!window.confirm("Remove this beneficiary?")) return;
+    try { await api.deleteBeneficiary(id); await refresh(); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to remove beneficiary"); }
+  }
+
+  return (
+    <>
+      <div className="page-header account-page-header"><div><span className="eyebrow">Payees</span><h2>Beneficiaries</h2><p>Keep trusted recipients ready for transfers.</p></div></div>
+      {error && <div className="error">{error}</div>}
+      <div className="accounts-layout">
+        <form className="panel form" onSubmit={submit}><span className="eyebrow">{editing ? "Edit payee" : "New payee"}</span><h3>{editing ? "Update beneficiary" : "Add beneficiary"}</h3>
+          <input required placeholder="Nickname" value={form.nickname} onChange={(event) => update("nickname", event.target.value)} />
+          <input required placeholder="Account holder name" value={form.accountHolderName} onChange={(event) => update("accountHolderName", event.target.value)} />
+          <input required placeholder="Account number" value={form.accountNumber} onChange={(event) => update("accountNumber", event.target.value)} />
+          <input placeholder="Bank name" value={form.bankName ?? ""} onChange={(event) => update("bankName", event.target.value)} />
+          <input required maxLength={3} pattern="[A-Za-z]{3}" placeholder="Currency" value={form.currency} onChange={(event) => update("currency", event.target.value.toUpperCase())} />
+          <button>{editing ? "Save changes" : "Add beneficiary"}</button>
+          {editing && <button type="button" className="secondary-button" onClick={() => { setEditing(null); setForm(empty); }}>Cancel</button>}
+        </form>
+        <section className="beneficiary-list">
+          {items.length === 0 ? <div className="panel empty-accounts"><strong>No beneficiaries yet</strong><span>Add a recipient to make transfers easier.</span></div> :
+            items.map((item) => <article className="panel beneficiary-row" key={item.id}><div><strong>{item.nickname}</strong><small>{item.accountHolderName} · {item.accountNumber}</small><small>{item.bankName || "External bank"} · {item.currency}</small></div><div className="actions"><button onClick={() => { setEditing(item.id); setForm({ nickname: item.nickname, accountHolderName: item.accountHolderName, accountNumber: item.accountNumber, bankName: item.bankName ?? "", currency: item.currency }); }}>Edit</button><button className="danger-button" onClick={() => void remove(item.id)}>Remove</button></div></article>)}
+        </section>
+      </div>
+    </>
+  );
+}
+
+function Loans() {
+  const [items, setItems] = useState<LoanResponse[]>([]);
+  const [principal, setPrincipal] = useState("");
+  const [rate, setRate] = useState("8.5");
+  const [term, setTerm] = useState("24");
+  const [currency, setCurrency] = useState("USD");
+  const [error, setError] = useState("");
+  async function refresh() {
+    try { setItems(await api.loans()); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to load loans"); }
+  }
+  useEffect(() => { void refresh(); }, []);
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    try { await api.createLoan(Number(principal), Number(rate), Number(term), currency.toUpperCase()); setPrincipal(""); await refresh(); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to apply for loan"); }
+  }
+  async function updateStatus(loan: LoanResponse, status: LoanStatus) {
+    try { const updated = await api.updateLoanStatus(loan.id, status); setItems((current) => current.map((item) => item.id === updated.id ? updated : item)); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to update loan"); }
+  }
+  return (
+    <>
+      <div className="page-header account-page-header"><div><span className="eyebrow">Borrowing</span><h2>Loans</h2><p>Review applications and keep your borrowing goals on track.</p></div></div>
+      {error && <div className="error">{error}</div>}
+      <div className="accounts-layout">
+        <form className="panel form" onSubmit={submit}><span className="eyebrow">New application</span><h3>Apply for a loan</h3><label>Principal amount</label><input required type="number" min="0.01" step="0.01" value={principal} onChange={(event) => setPrincipal(event.target.value)} placeholder="25000" /><label>Annual interest rate (%)</label><input required type="number" min="0" step="0.01" value={rate} onChange={(event) => setRate(event.target.value)} /><label>Term (months)</label><input required type="number" min="1" value={term} onChange={(event) => setTerm(event.target.value)} /><label>Currency</label><input required maxLength={3} pattern="[A-Za-z]{3}" value={currency} onChange={(event) => setCurrency(event.target.value)} /><button>Submit application <span>→</span></button></form>
+        <section className="loan-list">{items.length === 0 ? <div className="panel empty-accounts"><strong>No loan applications</strong><span>Your applications will appear here.</span></div> :         items.map((loan) => <article className="panel loan-row" key={loan.id}><div><span className="eyebrow">{loan.currency} loan</span><h3>{money(loan.principalAmount, loan.currency)}</h3><small>{loan.annualInterestRate}% APR · {loan.termMonths} months</small></div><div className="actions"><em className={`status-badge ${loan.status.toLowerCase()}`}>{loan.status}</em>{loan.status === "APPLICATION" && <button onClick={() => void updateStatus(loan, "REJECTED")}>Withdraw</button>}</div></article>)}</section>
+      </div>
+    </>
+  );
+}
+
+function Activity() {
+  const [items, setItems] = useState<TransactionResponse[]>([]);
+  const [accounts, setAccounts] = useState<AccountResponse[]>([]);
+  const [accountId, setAccountId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState<TransactionType>("DEBIT");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  async function refresh() {
+    try { setItems(await api.customerTransactions()); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to load activity"); }
+  }
+  useEffect(() => { void refresh(); void api.accounts().then(setAccounts).catch(() => undefined); }, []);
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const account = accounts.find((item) => item.id === accountId);
+    if (!account) { setError("Choose an account."); return; }
+    try { await api.createTransaction(accountId, Number(amount), account.currency, type, description); setAmount(""); setDescription(""); await refresh(); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to record transaction"); }
+  }
+  return (
+    <>
+      <div className="page-header account-page-header"><div><span className="eyebrow">Money movement</span><h2>Activity</h2><p>Review your transaction timeline.</p></div></div>
+      {error && <div className="error">{error}</div>}
+      <form className="panel form" onSubmit={submit}><span className="eyebrow">Manual entry</span><h3>Record transaction</h3><p>Manual records do not change your account balance. Use Transfers to move money.</p><select required value={accountId} onChange={(event) => setAccountId(event.target.value)}><option value="">Choose account</option>{accounts.map((account) => <option value={account.id} key={account.id}>{account.accountNumber} · {account.currency}</option>)}</select><select value={type} onChange={(event) => setType(event.target.value as TransactionType)}><option value="DEBIT">Debit</option><option value="CREDIT">Credit</option><option value="TRANSFER">Transfer</option></select><input required type="number" min="0.01" step="0.01" placeholder="Amount" value={amount} onChange={(event) => setAmount(event.target.value)} /><input required placeholder="Description" value={description} onChange={(event) => setDescription(event.target.value)} /><button>Record transaction</button></form>
+      <section className="panel"><table><thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Status</th><th>Amount</th></tr></thead><tbody>{items.map((item) => <tr key={item.id}><td>{new Date(item.createdAt).toLocaleDateString()}</td><td>{item.description || "Transaction"}</td><td>{item.type}</td><td><em className={`status-badge ${item.status.toLowerCase()}`}>{item.status}</em></td><td>{money(item.amount, item.currency)}</td></tr>)}</tbody></table>{items.length === 0 && <div className="empty-accounts">No transaction activity yet.</div>}</section>
+    </>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
@@ -1012,6 +1329,10 @@ export default function App() {
         element={secure(<AccountDetail />)}
       />
       <Route path="/transfer" element={secure(<Transfer />)} />
+      <Route path="/cards" element={secure(<Cards />)} />
+      <Route path="/beneficiaries" element={secure(<Beneficiaries />)} />
+      <Route path="/loans" element={secure(<Loans />)} />
+      <Route path="/activity" element={secure(<Activity />)} />
       <Route
         path="/accounts/:accountId/transactions"
         element={secure(<Transactions />)}

@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudbank-config
+  namespace: cloudbank
+data:
+  CLOUDBANK_DB_NAME: cloudbank_core
+  CLOUDBANK_JWT_PUBLIC_KEY: file:/app/public-keys/jwt-public.pem
+  CLOUDBANK_JWT_PRIVATE_KEY: file:/app/private-keys/jwt-private.pem
+  CLOUDBANK_EMAIL_SMTP_HOST: mailpit.cloudbank.svc.cluster.local
+  CLOUDBANK_EMAIL_SMTP_PORT: '1025'
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: '5'
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: '1'
+  JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=65.0
+  CLOUDBANK_CUSTOMER_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_CUSTOMER_DB_PORT: '5432'
+  CLOUDBANK_CUSTOMER_DB_NAME: cloudbank_customer
+  CLOUDBANK_ACCOUNT_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_ACCOUNT_DB_PORT: '5432'
+  CLOUDBANK_ACCOUNT_DB_NAME: cloudbank_account
+  CLOUDBANK_LEDGER_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_LEDGER_DB_PORT: '5432'
+  CLOUDBANK_LEDGER_DB_NAME: cloudbank_ledger
+  CLOUDBANK_NOTIFICATION_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_NOTIFICATION_DB_PORT: '5432'
+  CLOUDBANK_NOTIFICATION_DB_NAME: cloudbank_notification
+  CLOUDBANK_CARD_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_CARD_DB_PORT: '5432'
+  CLOUDBANK_CARD_DB_NAME: cloudbank_card
+  CLOUDBANK_TRANSACTION_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_TRANSACTION_DB_PORT: '5432'
+  CLOUDBANK_TRANSACTION_DB_NAME: cloudbank_transaction
+  CLOUDBANK_BENEFICIARY_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_BENEFICIARY_DB_PORT: '5432'
+  CLOUDBANK_BENEFICIARY_DB_NAME: cloudbank_beneficiary
+  CLOUDBANK_LOAN_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_LOAN_DB_PORT: '5432'
+  CLOUDBANK_LOAN_DB_NAME: cloudbank_loan
+  CLOUDBANK_AUDIT_DB_HOST: postgres.cloudbank.svc.cluster.local
+  CLOUDBANK_AUDIT_DB_PORT: '5432'
+  CLOUDBANK_AUDIT_DB_NAME: cloudbank_audit
+  CLOUDBANK_AUTH_OUTBOX_PUBLISHER_ENABLED: 'true'
+  CLOUDBANK_OUTBOX_PUBLISHER_ENABLED: 'true'
+  CLOUDBANK_CUSTOMER_CONSUMER_ENABLED: 'true'
+  CLOUDBANK_NOTIFICATION_CONSUMER_ENABLED: 'true'
+  CLOUDBANK_NOTIFICATION_CONTACT_CONSUMER_ENABLED: 'true'
+  CLOUDBANK_EMAIL_WORKER_ENABLED: 'true'
+  CLOUDBANK_EMAIL_SMTP_ENABLED: 'true'
+  CLOUDBANK_AUDIT_CONSUMER_ENABLED: 'true'

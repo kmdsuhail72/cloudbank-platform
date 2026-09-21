@@ -1,0 +1,388 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cloudbank
+resources:
+- ../../../kubernetes
+images:
+- name: ghcr.io/cloudbank-platform/auth-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/auth-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/api-gateway
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/api-gateway
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/customer-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/customer-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/account-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/account-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/ledger-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/ledger-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/notification-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/notification-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/audit-fraud-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/audit-fraud-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/card-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/card-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/transaction-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/transaction-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/beneficiary-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/beneficiary-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/loan-service
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/loan-service
+  newTag: bootstrap-required
+- name: ghcr.io/cloudbank-platform/frontend
+  newName: ghcr.io/kmdsuhail72/cloudbank-platform/frontend
+  newTag: bootstrap-required
+patches:
+- target:
+    kind: Deployment
+    name: auth-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: auth-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: auth-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+            - name: jwt-private
+              mountPath: /app/private-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+          - name: jwt-private
+            secret:
+              secretName: cloudbank-jwt-private
+- target:
+    kind: Deployment
+    name: api-gateway
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: api-gateway
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: api-gateway
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+- target:
+    kind: Deployment
+    name: customer-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: customer-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: customer-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+- target:
+    kind: Deployment
+    name: account-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: account-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: account-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+- target:
+    kind: Deployment
+    name: ledger-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ledger-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: ledger-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+- target:
+    kind: Deployment
+    name: notification-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: notification-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: notification-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+- target:
+    kind: Deployment
+    name: audit-fraud-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: audit-fraud-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: audit-fraud-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+- target:
+    kind: Deployment
+    name: card-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: card-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: card-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+- target:
+    kind: Deployment
+    name: transaction-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: transaction-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: transaction-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+- target:
+    kind: Deployment
+    name: beneficiary-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: beneficiary-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: beneficiary-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+- target:
+    kind: Deployment
+    name: loan-service
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: loan-service
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: loan-service
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: jwt-public
+              mountPath: /app/public-keys
+              readOnly: true
+          volumes:
+          - name: jwt-public
+            secret:
+              secretName: cloudbank-jwt-public
+- target:
+    kind: Deployment
+    name: frontend
+  patch: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: frontend
+    spec:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: frontend
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+- target:
+    kind: Ingress
+    name: cloudbank-ingress
+  patch: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: cloudbank-ingress
+    spec:
+      rules:
+      - host: cloudbank.local
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+- path: runtime-config.yaml
+- target:
+    kind: Ingress
+    name: cloudbank-ingress
+  patch: |-
+    - op: remove
+      path: /metadata/annotations/nginx.ingress.kubernetes.io~1rewrite-target

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beneficiary-service
+  namespace: cloudbank
+  labels:
+    app: beneficiary-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: beneficiary-service
+  template:
+    metadata:
+      labels:
+        app: beneficiary-service
+    spec:
+      containers:
+        - name: beneficiary-service
+          image: ghcr.io/cloudbank-platform/beneficiary-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8090
+          envFrom:
+            - configMapRef:
+                name: cloudbank-config
+            - secretRef:
+                name: cloudbank-secrets
+          readinessProbe:
+            tcpSocket:
+              port: 8090
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8090
+            initialDelaySeconds: 30
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: beneficiary-service
+  namespace: cloudbank
+spec:
+  selector:
+    app: beneficiary-service
+  ports:
+    - name: http
+      port: 8090
+      targetPort: 8090
+  type: ClusterIP

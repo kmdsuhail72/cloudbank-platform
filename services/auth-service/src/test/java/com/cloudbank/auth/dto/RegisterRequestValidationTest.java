@@ -31,7 +31,7 @@ class RegisterRequestValidationTest {
     @Test
     void shouldAcceptValidRegistrationRequest() {
         RegisterRequest request =
-                new RegisterRequest("user@example.com", "StrongPass123");
+                new RegisterRequest("user@example.com", "StrongPass123", null, null, null, null);
 
         Set<ConstraintViolation<RegisterRequest>> violations =
                 validator.validate(request);
@@ -42,7 +42,7 @@ class RegisterRequestValidationTest {
     @Test
     void shouldRejectInvalidEmail() {
         RegisterRequest request =
-                new RegisterRequest("invalid-email", "StrongPass123");
+                new RegisterRequest("invalid-email", "StrongPass123", null, null, null, null);
 
         Set<ConstraintViolation<RegisterRequest>> violations =
                 validator.validate(request);
@@ -57,7 +57,7 @@ class RegisterRequestValidationTest {
     @Test
     void shouldRejectShortPassword() {
         RegisterRequest request =
-                new RegisterRequest("user@example.com", "short");
+                new RegisterRequest("user@example.com", "short", null, null, null, null);
 
         Set<ConstraintViolation<RegisterRequest>> violations =
                 validator.validate(request);
@@ -74,7 +74,7 @@ class RegisterRequestValidationTest {
         String password = "é".repeat(37);
 
         RegisterRequest request =
-                new RegisterRequest("user@example.com", password);
+                new RegisterRequest("user@example.com", password, null, null, null, null);
 
         Set<ConstraintViolation<RegisterRequest>> violations =
                 validator.validate(request);

@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cloudbank
+  namespace: argocd
+spec:
+  description: CloudBank development workloads
+  sourceRepos:
+    - https://github.com/kmdsuhail72/cloudbank-platform.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: cloudbank
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Service
+    - group: apps
+      kind: Deployment
+    - group: networking.k8s.io
+      kind: Ingress

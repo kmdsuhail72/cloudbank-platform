@@ -1,0 +1,19 @@
+name: Validate GitOps
+on:
+  pull_request:
+    paths: ['deploy/kubernetes/**', 'deploy/gitops/**', 'scripts/validate-gitops.py', 'scripts/promote-gitops.py', '.github/workflows/gitops.yml']
+  push:
+    branches: [main]
+    paths: ['deploy/kubernetes/**', 'deploy/gitops/**', 'scripts/validate-gitops.py', 'scripts/promote-gitops.py', '.github/workflows/gitops.yml']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: v1.34.1
+      - run: python3 -m pip install PyYAML==6.0.2
+      - run: python3 scripts/validate-gitops.py

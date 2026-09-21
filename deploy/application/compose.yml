@@ -2,6 +2,7 @@ name: cloudbank-application
 
 x-service-defaults: &service-defaults
   restart: unless-stopped
+  mem_limit: 384m
   env_file:
     - ../../.env.local
   networks:
@@ -10,6 +11,7 @@ x-service-defaults: &service-defaults
 services:
 
   auth-service:
+    build: ../../services/auth-service
     <<: *service-defaults
     image: cloudbank/auth-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-auth-service
@@ -21,12 +23,15 @@ services:
     ports:
       - "127.0.0.1:8081:8081"
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
       CLOUDBANK_DB_HOST: cloudbank-postgres
       CLOUDBANK_DB_PORT: "5432"
       CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
       CLOUDBANK_AUTH_OUTBOX_PUBLISHER_ENABLED: "true"
 
   customer-service:
+    build: ../../services/customer-service
     <<: *service-defaults
     image: cloudbank/customer-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-customer-service
@@ -38,12 +43,15 @@ services:
     ports:
       - "127.0.0.1:8083:8083"
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
       CLOUDBANK_CUSTOMER_DB_HOST: cloudbank-postgres
       CLOUDBANK_CUSTOMER_DB_PORT: "5432"
       CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
       CLOUDBANK_CUSTOMER_CONSUMER_ENABLED: "true"
 
   account-service:
+    build: ../../services/account-service
     <<: *service-defaults
     image: cloudbank/account-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-account-service
@@ -55,6 +63,8 @@ services:
     ports:
       - "127.0.0.1:8084:8084"
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
       CLOUDBANK_ACCOUNT_DB_HOST: cloudbank-postgres
       CLOUDBANK_ACCOUNT_DB_PORT: "5432"
       CLOUDBANK_CUSTOMER_SERVICE_URL: http://customer-service:8083
@@ -62,7 +72,93 @@ services:
       customer-service:
         condition: service_healthy
 
+  card-service:
+    build: ../../services/card-service
+    <<: *service-defaults
+    image: cloudbank/card-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-card-service
+    volumes:
+      - type: bind
+        source: ../../services/auth-service/keys/jwt-public.pem
+        target: /auth-service/keys/jwt-public.pem
+        read_only: true
+    ports:
+      - "127.0.0.1:8088:8088"
+    environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      CLOUDBANK_CARD_DB_HOST: cloudbank-postgres
+      CLOUDBANK_CARD_DB_PORT: "5432"
+      CLOUDBANK_CARD_DB_NAME: cloudbank_card
+      CLOUDBANK_CARD_DB_USER: cloudbank_card
+      CLOUDBANK_CARD_DB_PASSWORD: cloudbank_card
+
+  transaction-service:
+    build: ../../services/transaction-service
+    <<: *service-defaults
+    image: cloudbank/transaction-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-transaction-service
+    volumes:
+      - type: bind
+        source: ../../services/auth-service/keys/jwt-public.pem
+        target: /auth-service/keys/jwt-public.pem
+        read_only: true
+    ports:
+      - "127.0.0.1:8089:8089"
+    environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      CLOUDBANK_ACCOUNT_SERVICE_URL: http://account-service:8084
+      CLOUDBANK_TRANSACTION_DB_HOST: cloudbank-postgres
+      CLOUDBANK_TRANSACTION_DB_PORT: "5432"
+      CLOUDBANK_TRANSACTION_DB_NAME: cloudbank_transaction
+      CLOUDBANK_TRANSACTION_DB_USER: cloudbank_transaction
+      CLOUDBANK_TRANSACTION_DB_PASSWORD: cloudbank_transaction
+
+  beneficiary-service:
+    build: ../../services/beneficiary-service
+    <<: *service-defaults
+    image: cloudbank/beneficiary-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-beneficiary-service
+    volumes:
+      - type: bind
+        source: ../../services/auth-service/keys/jwt-public.pem
+        target: /auth-service/keys/jwt-public.pem
+        read_only: true
+    ports:
+      - "127.0.0.1:8090:8090"
+    environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      CLOUDBANK_BENEFICIARY_DB_HOST: cloudbank-postgres
+      CLOUDBANK_BENEFICIARY_DB_PORT: "5432"
+      CLOUDBANK_BENEFICIARY_DB_NAME: cloudbank_beneficiary
+      CLOUDBANK_BENEFICIARY_DB_USER: cloudbank_beneficiary
+      CLOUDBANK_BENEFICIARY_DB_PASSWORD: cloudbank_beneficiary
+
+  loan-service:
+    build: ../../services/loan-service
+    <<: *service-defaults
+    image: cloudbank/loan-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    container_name: cloudbank-loan-service
+    volumes:
+      - type: bind
+        source: ../../services/auth-service/keys/jwt-public.pem
+        target: /auth-service/keys/jwt-public.pem
+        read_only: true
+    ports:
+      - "127.0.0.1:8091:8091"
+    environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      CLOUDBANK_LOAN_DB_HOST: cloudbank-postgres
+      CLOUDBANK_LOAN_DB_PORT: "5432"
+      CLOUDBANK_LOAN_DB_NAME: cloudbank_loan
+      CLOUDBANK_LOAN_DB_USER: cloudbank_loan
+      CLOUDBANK_LOAN_DB_PASSWORD: cloudbank_loan
+
   ledger-service:
+    build: ../../services/ledger-service
     <<: *service-defaults
     image: cloudbank/ledger-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-ledger-service
@@ -74,6 +170,8 @@ services:
     ports:
       - "127.0.0.1:8085:8085"
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
       CLOUDBANK_LEDGER_DB_HOST: cloudbank-postgres
       CLOUDBANK_LEDGER_DB_PORT: "5432"
       CLOUDBANK_ACCOUNT_SERVICE_URL: http://account-service:8084
@@ -84,12 +182,15 @@ services:
         condition: service_healthy
 
   notification-service:
+    build: ../../services/notification-service
     <<: *service-defaults
     image: cloudbank/notification-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-notification-service
     ports:
       - "127.0.0.1:8086:8086"
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
       CLOUDBANK_NOTIFICATION_DB_HOST: cloudbank-postgres
       CLOUDBANK_NOTIFICATION_DB_PORT: "5432"
       CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
@@ -101,16 +202,20 @@ services:
       CLOUDBANK_EMAIL_SMTP_ENABLED: "true"
 
   audit-fraud-service:
+    build: ../../services/audit-fraud-service
     <<: *service-defaults
     image: cloudbank/audit-fraud-service:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-audit-fraud-service
     ports:
       - "127.0.0.1:8087:8087"
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
       CLOUDBANK_AUDIT_DB_HOST: cloudbank-postgres
       CLOUDBANK_AUDIT_DB_PORT: "5432"
       CLOUDBANK_AUDIT_DB_NAME: cloudbank_audit
       CLOUDBANK_AUDIT_DB_USER: cloudbank_audit
+      CLOUDBANK_AUDIT_DB_PASSWORD: cloudbank_audit
       CLOUDBANK_KAFKA_BOOTSTRAP_SERVERS: cloudbank-kafka:19092
       CLOUDBANK_AUDIT_CONSUMER_ENABLED: "true"
     depends_on:
@@ -118,6 +223,7 @@ services:
         condition: service_started
 
   api-gateway:
+    build: ../../services/api-gateway
     <<: *service-defaults
     image: cloudbank/api-gateway:${CLOUDBANK_IMAGE_TAG:-049d4e2}
     container_name: cloudbank-api-gateway
@@ -129,9 +235,15 @@ services:
     ports:
       - "127.0.0.1:8082:8082"
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
       CLOUDBANK_AUTH_SERVICE_URL: http://auth-service:8081
       CLOUDBANK_CUSTOMER_SERVICE_URL: http://customer-service:8083
       CLOUDBANK_ACCOUNT_SERVICE_URL: http://account-service:8084
+      CLOUDBANK_CARD_SERVICE_URL: http://card-service:8088
+      CLOUDBANK_TRANSACTION_SERVICE_URL: http://transaction-service:8089
+      CLOUDBANK_BENEFICIARY_SERVICE_URL: http://beneficiary-service:8090
+      CLOUDBANK_LOAN_SERVICE_URL: http://loan-service:8091
       CLOUDBANK_LEDGER_SERVICE_URL: http://ledger-service:8085
     depends_on:
       auth-service:
@@ -140,7 +252,27 @@ services:
         condition: service_healthy
       account-service:
         condition: service_healthy
+      card-service:
+        condition: service_started
+      transaction-service:
+        condition: service_started
+      beneficiary-service:
+        condition: service_started
+      loan-service:
+        condition: service_started
       ledger-service:
+        condition: service_healthy
+
+  frontend:
+    build: ../../frontend
+    image: cloudbank/frontend:${CLOUDBANK_IMAGE_TAG:-049d4e2}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    networks:
+      - cloudbank-messaging
+    depends_on:
+      api-gateway:
         condition: service_healthy
 
 networks:
