@@ -31,11 +31,11 @@ publisher; restrict package write permissions and do not reuse release tags.
 
 ## Cluster prerequisites
 
-Provide a Kubernetes cluster, Argo CD, an NGINX ingress controller, and the
+Provide a Kubernetes cluster, Argo CD, a MicroK8s ingress controller (class `public`), and the
 following dependencies before enabling reconciliation:
 
 - PostgreSQL reachable as `postgres.cloudbank.svc.cluster.local:5432`, with
-  databases `cloudbank_core`, `cloudbank_customer`, `cloudbank_account`,
+  databases `cloudbank_auth`, `cloudbank_customer`, `cloudbank_account`,
   `cloudbank_ledger`, `cloudbank_notification`, `cloudbank_card`,
   `cloudbank_transaction`, `cloudbank_beneficiary`, `cloudbank_loan`, and
   `cloudbank_audit`. Configure owners and passwords to match the runtime Secret.
@@ -142,3 +142,29 @@ Prometheus/Grafana installation are not managed by this Application.
 
 References: [Argo CD automated sync](https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/),
 [Kustomize](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/).
+
+## Single-node local deployment
+
+The development overlay uses MicroK8s ingress class `public`. Enable it with
+`microk8s enable ingress`. On this development host, reuse the existing Docker
+PostgreSQL, Kafka and Mailpit containers without moving or resetting data:
+
+```bash
+python3 scripts/configure-local-cluster.py --context microk8s
+```
+
+This reads `.env.local` and the local JWT keys and creates the runtime
+Secrets. PostgreSQL and Mailpit are exposed to MicroK8s through selectorless
+Services and EndpointSlices that point to their current Docker container IPs.
+
+Kafka uses a local host-network proxy because normal Calico pods on this
+single-node MicroK8s host cannot directly reach the Docker Kafka bridge address.
+The helper creates `cloudbank-local-kafka-proxy`, listens on node port `29092`,
+and forwards traffic to Kafka's internal `19092` listener. The `kafka` and
+`cloudbank-kafka` selectorless Services point to that proxy, while the broker
+continues advertising `cloudbank-kafka:19092`.
+
+These local dependency resources remain outside Argo CD management. Run the
+helper again whenever the Docker dependency containers are recreated because
+their Docker IP addresses can change. This setup is only for the current
+single-node development host and is not a portable production deployment.

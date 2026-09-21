@@ -4,7 +4,7 @@ metadata:
   name: cloudbank-config
   namespace: cloudbank
 data:
-  CLOUDBANK_DB_NAME: cloudbank_core
+  CLOUDBANK_DB_NAME: cloudbank_auth
   CLOUDBANK_JWT_PUBLIC_KEY: file:/app/public-keys/jwt-public.pem
   CLOUDBANK_JWT_PRIVATE_KEY: file:/app/private-keys/jwt-private.pem
   CLOUDBANK_EMAIL_SMTP_HOST: mailpit.cloudbank.svc.cluster.local

@@ -368,6 +368,7 @@ patches:
     metadata:
       name: cloudbank-ingress
     spec:
+      ingressClassName: public
       rules:
       - host: cloudbank.local
         http:
