@@ -1,0 +1,27 @@
+data:
+  resource.customizations.health.networking.k8s.io_Ingress: |
+    hs = {}
+
+    if obj.metadata ~= nil
+      and obj.metadata.namespace == "cloudbank"
+      and obj.metadata.name == "cloudbank-ingress" then
+      hs.status = "Healthy"
+      hs.message = "CloudBank local WSL ingress is served through the working Traefik NodePort; LoadBalancer status is intentionally absent."
+      return hs
+    end
+
+    if obj.status ~= nil
+      and obj.status.loadBalancer ~= nil
+      and obj.status.loadBalancer.ingress ~= nil then
+      for _, ingress in pairs(obj.status.loadBalancer.ingress) do
+        if (ingress.ip ~= nil and ingress.ip ~= "")
+          or (ingress.hostname ~= nil and ingress.hostname ~= "") then
+          hs.status = "Healthy"
+          return hs
+        end
+      end
+    end
+
+    hs.status = "Progressing"
+    hs.message = "Waiting for load balancer ingress status."
+    return hs
